@@ -25,8 +25,6 @@ if (!$_recordId) {
 
 
 $_stmt = $db_mysqli->prepare("UPDATE animals
-
-
 SET 
 name=?,
 breed=?,

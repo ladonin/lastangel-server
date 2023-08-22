@@ -79,10 +79,6 @@ if (!$_recordId) {
 
 ///////////////////// --> ВИДЕО
 // Приходит  файл - добавляем
-
-
-
-
 $_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'pets/'.$_recordId.'/';
 if (!is_dir($_videoTempFolder) && !mkdir($_videoTempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_videoTempFolder, 500);
@@ -148,7 +144,8 @@ $_anotherImagesDb = [];
 
 
 // Главное фото -->
-if (!isset($_FILES['main_image'])) { 
+if (!isset($_FILES['main_image'])) {
+	functions_totalRemoveFileOrDir($_tempFolder);
 	functions_errorOutput('не передано главное фото', 400);
 }
  

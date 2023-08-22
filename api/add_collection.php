@@ -2,6 +2,7 @@
 require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
+require('@videos_processor.php');
 require('@collections_common.php');
 auth_verify([$ADMIN_ROLE]);
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
@@ -29,20 +30,14 @@ $_stmt = $db_mysqli->prepare("INSERT INTO collections (
 	short_description, 
 	description, 
 	ismajor,
-	videoVk1,
-	videoVk2,
-	videoVk3,
 	target_sum, 
 	created
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $_now = time();
 $_animal_id = isset($_data['animal_id']) ? $_data['animal_id'] : 0;
 $_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
-$_videoVk1 = isset($_data['videoVk1']) ? $_data['videoVk1'] : "";
-$_videoVk2 = isset($_data['videoVk2']) ? $_data['videoVk2'] : "";
-$_videoVk3 = isset($_data['videoVk3']) ? $_data['videoVk3'] : "";
 
-$_stmt->bind_param("siiississsii", 
+$_stmt->bind_param("siiissiii", 
 	$_data['name'],
 	$_data['type'],
 	$_data['status'],
@@ -50,9 +45,6 @@ $_stmt->bind_param("siiississsii",
 	$_data['short_description'], 
 	$_data['description'], 
 	$_ismajor,
-	$_videoVk1,
-	$_videoVk2,
-	$_videoVk3,
 	$_data['target_sum'], 
 	$_now
  );
@@ -71,8 +63,48 @@ if (!$_recordId) {
 
 ///////////////////// <-- ОСНОВНЫЕ ДАННЫЕ
 
+///////////////////// --> ВИДЕО
+// Приходит  файл - добавляем
+$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'pets/'.$_recordId.'/';
+if (!is_dir($_videoTempFolder) && !mkdir($_videoTempFolder, 0700, true)) {
+	functions_errorOutput('Не удалось создать директорию:' . $_videoTempFolder, 500);
+}
 
+function processVideo($name) {
+	global $db_mysqli;
+	global $_recordId;
+	global $_videoTempFolder;
+	if (isset($_FILES[$name]) && $_FILES[$name]) {
+		// Если пришел файл, то надо добавить
+		$video = $_FILES[$name];
+		videos_checkExtension($video, $_videoTempFolder);
+		videos_checkSize($video, $_videoTempFolder);
+		
+		// Ищем старый
+		$_res = $db_mysqli->query("SELECT $name FROM collections WHERE id='$_recordId'");
+		$_row = $_res->fetch_assoc();
+		$_oldVideo = $_row[$name];
 
+		$_videoFileName = $name.videos_getExtension($video, $_videoTempFolder);
+		$_pathVideo = $_videoTempFolder.$_videoFileName;
+
+		// Грузим исходник в temp
+		if(move_uploaded_file($_FILES[$name]['tmp_name'], $_pathVideo)) {
+			// Загружаем на внешнее хранилище
+			outerStorage_uploadFile($_pathVideo, 'collections/'.$_recordId);
+			$db_mysqli->query("UPDATE collections SET $name = '$_videoFileName' WHERE id = '$_recordId'");
+		} else {
+			functions_totalRemoveFileOrDir($_videoTempFolder);
+			functions_errorOutput('ошибка загрузки видео: ' . $_FILES[$name]['name'] . ' в ' . $_pathVideo, 500);
+		}	
+	}
+}
+
+processVideo('video1');
+processVideo('video2');
+processVideo('video3');
+
+///////////////////// <-- ВИДЕО
 
 ///////////////////// --> ФОТО ФАЙЛЫ
 $_tempFolder = $IMAGES_TEMPFOLDER_PATH.'collections/'.$_recordId.'/';
@@ -88,7 +120,8 @@ $_anotherImagesDb = [];
 
 
 // Главное фото -->
-if (!isset($_FILES['main_image'])) { 
+if (!isset($_FILES['main_image'])) {
+	functions_totalRemoveFileOrDir($_tempFolder);
 	functions_errorOutput('не передано главное фото', 400);
 }
  
@@ -97,13 +130,14 @@ $_pathMain = $_tempFolder.$_mainFileName;
 
 // Грузим исходник в temp
 if(move_uploaded_file($_FILES['main_image']['tmp_name'],$_pathMain)) {
-	images_checkProportions($_pathMain, 1, 1);
-	$_mainImages = images_localSave($_mainFileName, $_tempFolder, $IMAGES_MAIN_SIZES);
+	images_checkProportions($_pathMain, 1, 1, $_tempFolder);
+	$_mainImages = images_localSave($_mainFileName, $_tempFolder, $IMAGES_MAIN_SIZES, $_tempFolder);
 	// + Исходник
 	$_mainImages[] = $_mainFileName;
 	// Размеры и расширение фронт знает. Номер сохранить нужно, потому что может фото отсутствовать.
 	$_mainImagesDb[] = 1; 
 } else {
+	functions_totalRemoveFileOrDir($_tempFolder);
 	functions_errorOutput('ошибка загрузки главного фото: ' . $_FILES['main_image']['name'] . ' в ' . $_pathMain, 500);
 }
 // <-- Главное фото
@@ -117,13 +151,14 @@ if (isset($_FILES['another_images'])) {
 
 		// Грузим в temp
 		if(move_uploaded_file($_path, $_pathAnother)) {
-			$_anotherImages = array_merge($_anotherImages, images_localSave($_anotherFileName, $_tempFolder, $IMAGES_ANOTHER_SIZES));
+			$_anotherImages = array_merge($_anotherImages, images_localSave($_anotherFileName, $_tempFolder, $IMAGES_ANOTHER_SIZES, $_tempFolder));
 			// + Исходник
 			$_anotherImages[] = $_anotherFileName;
 
 			// Сохраняем только номер фото (размеры и расширение фронт знает)
 			$_anotherImagesDb[] = $_index+1;
 		} else {
+			functions_totalRemoveFileOrDir($_tempFolder);
 			functions_errorOutput('ошибка дополнительного фото: ' . $_path . ' в ' . $_pathAnother, 500);
 		}
 	}
