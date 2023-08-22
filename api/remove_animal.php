@@ -14,7 +14,7 @@ if (!$_recordId) {
 }
 
 
-$_res = $db_mysqli->query("SELECT main_image, another_images FROM animals WHERE id=$_recordId");
+$_res = $db_mysqli->query("SELECT main_image, another_images, video1, video2, video3 FROM animals WHERE id=$_recordId");
 $_row = $_res->fetch_assoc();
 
 
@@ -25,6 +25,16 @@ $_another_images = json_decode($_row['another_images']);
 $db_mysqli->query("DELETE FROM animals WHERE id = '".$_recordId."'");
 
 // Удаляем из хранилища
+if ($_row['video1']) {	
+	outerStorage_removeFile($_row['video1'], 'pets/'.$_recordId);
+}
+if ($_row['video2']) {	
+	outerStorage_removeFile($_row['video2'], 'pets/'.$_recordId);
+}
+if ($_row['video3']) {	
+	outerStorage_removeFile($_row['video3'], 'pets/'.$_recordId);
+}
+
 foreach ($_another_images as $_number) {
 	$_filesSizeNames = images_getFileSizeNames('another', $_number, $IMAGES_ANOTHER_SIZES);
 

@@ -1,7 +1,7 @@
 <?php
 require('configs/outer_storage.php');
 
-$OUTER_STORAGE_PHOTOS_URL = $CONFIGS_OUTER_STORAGE_URL;
+$OUTER_STORAGE_URL = $CONFIGS_OUTER_STORAGE_URL;
 
 function outerStorage_headersToArray($str)
 {
@@ -26,8 +26,8 @@ $outerStorage_authToken = $outerStorage_data['x-auth-token'];
 
 function outerStorage_uploadFile($src, $folder) {
 
-	global $outerStorage_url, $outerStorage_authToken, $OUTER_STORAGE_PHOTOS_URL;
-	exec("curl -i -XPUT ${outerStorage_url}${OUTER_STORAGE_PHOTOS_URL}${folder}/ -H 'X-Auth-Token: ${outerStorage_authToken}'  -T $src", $_output);
+	global $outerStorage_url, $outerStorage_authToken, $OUTER_STORAGE_URL;
+	exec("curl -i -XPUT ${outerStorage_url}${OUTER_STORAGE_URL}${folder}/ -H 'X-Auth-Token: ${outerStorage_authToken}'  -T $src", $_output);
 	if (!count($_output) || strpos($_output[0], ' 201') === false) {
 		functions_errorOutput('ошибка загрузки файла на внешний сервер: ' . $src, 500);
 	}
@@ -37,8 +37,8 @@ function outerStorage_uploadFile($src, $folder) {
 
 function outerStorage_removeFile($file, $folder) {
 
-	global $outerStorage_url, $outerStorage_authToken, $OUTER_STORAGE_PHOTOS_URL;
-	exec("curl -i -XDELETE ${outerStorage_url}${OUTER_STORAGE_PHOTOS_URL}${folder}/${file} -H 'X-Auth-Token: ${outerStorage_authToken}'", $_output);
+	global $outerStorage_url, $outerStorage_authToken, $OUTER_STORAGE_URL;
+	exec("curl -i -XDELETE ${outerStorage_url}${OUTER_STORAGE_URL}${folder}/${file} -H 'X-Auth-Token: ${outerStorage_authToken}'", $_output);
 
 	if (!count($_output) || strpos($_output[0], ' 204') === false) {
 		functions_errorOutput('ошибка удаления файла c внешнего сервера: ' . $folder.'/'.$file, 500);
@@ -47,8 +47,8 @@ function outerStorage_removeFile($file, $folder) {
 
 // Может не потребоваться - после удаления последнего файла в директории selectel, она удаляется автоматом...
 function outerStorage_removeFolder($folder) {
-	global $outerStorage_url, $outerStorage_authToken, $OUTER_STORAGE_PHOTOS_URL;
-	exec("curl -i -XDELETE ${outerStorage_url}${OUTER_STORAGE_PHOTOS_URL}${folder} -H 'X-Auth-Token: ${outerStorage_authToken}'", $_output);
+	global $outerStorage_url, $outerStorage_authToken, $OUTER_STORAGE_URL;
+	exec("curl -i -XDELETE ${outerStorage_url}${OUTER_STORAGE_URL}${folder} -H 'X-Auth-Token: ${outerStorage_authToken}'", $_output);
 	if (!count($_output) || strpos($_output[0], ' 204') === false) {
 		// Потому что selectel автоматом удаляет опустевшую папку (бага), когда в ней удалили все файлы.
 		// Поэтому, это, всего лишь, попытка удалить папку, если она, вдруг, не удалилась автоматом.

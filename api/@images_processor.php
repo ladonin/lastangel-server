@@ -1,6 +1,6 @@
 <?php
 $IMAGES_MIN_WIDTH = 1200;
-$IMAGES_MIN_HEIGHT = 1200;
+$IMAGES_MIN_HEIGHT = 600;
 $IMAGES_MAX_WIDTH = 20000;
 $IMAGES_MAX_HEIGHT = 20000;
 
@@ -22,12 +22,13 @@ $IMAGES_MAIN_SIZES = array(
 
 
 
-function images_checkProportions($file, $w, $h, $die = true) {
+function images_checkProportions($file, $w, $h, $_tempFolder, $die = true) {
   list($_width, $_height, $_type, $_attr) = getimagesize($file);
   $_result = $_width/$_height === $w/$h;
 
   if (!$_result) {
-	  if ($die) { 
+	  if ($die) {
+		functions_totalRemoveFileOrDir($_tempFolder);
 		functions_errorOutput('некорректные пропорции изображения: ' . $file . ', ' . $_width . 'x' . $_height . ', ' . $w . 'x' . $h, 400);
 	  } else {
 		 return $_result;
@@ -63,7 +64,8 @@ function images_checkType($file, $die = true) {
   $_result = $_type === IMAGETYPE_PNG || $_type === IMAGETYPE_JPEG || $_type === IMAGETYPE_GIF || $_type === IMAGETYPE_BMP;
   
   if (!$_result) {
-	  if ($die) { 
+	  if ($die) {
+		functions_totalRemoveFileOrDir($file);
 		functions_errorOutput('некорректный формат изображения: ' . $file, 400);
 	  } else {
 		 return $_result;
@@ -77,7 +79,8 @@ function images_checkSizes($file, $die = true) {
   $_result = $_width > $IMAGES_MIN_WIDTH && $_width < $IMAGES_MAX_WIDTH && $_height > $IMAGES_MIN_HEIGHT && $_height < $IMAGES_MAX_HEIGHT;
 
   if (!$_result) {
-	  if ($die) { 
+	  if ($die) {
+		functions_totalRemoveFileOrDir($file);
 		functions_errorOutput('#1 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
 	  } else {
 		 return $_result;
@@ -95,6 +98,7 @@ function images_calculateRealSizes($file, $width, $height, $withSizeCheck = true
 
 	if ($withSizeCheck === true && $_width < $width && $_height < $height) {
 		// Слишком мелкая
+		functions_totalRemoveFileOrDir($file);
 		functions_errorOutput('#2 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
 	} else if ($_width >= $width && $_height < $height) {
 		// Годная по ширине
@@ -127,11 +131,11 @@ function images_calculateRealSizes($file, $width, $height, $withSizeCheck = true
 			'height'=> $_newHeight
 		);
 	}
-	
+	functions_totalRemoveFileOrDir($file);
 	functions_errorOutput('ошибка расчета итоговых габаритов изображения: ' . $file . ', ' . $_width . 'x' . $_height . ', ' . $width . 'x' . $height, 500);
 }
 
-function images_convertToJPEG($file) {
+function images_convertToJPEG($file, $_tempFolder) {
 	// Преобразуем в jpeg
 	$_source = null;
 	
@@ -146,8 +150,9 @@ function images_convertToJPEG($file) {
 	}
 	
 	if (!$_source) {
-		// functions_errorOutput('некорректный формат изображения: ' . $file, 400);
-		return false;
+		functions_totalRemoveFileOrDir($_tempFolder);
+		functions_errorOutput('некорректный формат изображения: ' . $file, 400);
+		// return false;
 	}
 	
 	
@@ -173,12 +178,13 @@ function images_createResizedCopy($file, $outputImage, $width, $height, $withSiz
  * @param $outputSizes - список размеров {code => {width, height}}[]
  * @return список путей до файлов, которые создали на основе исходника
  */
-function images_localSave($fileName, $folder, $outputSizes, $withSizeCheck = true) {
+function images_localSave($fileName, $folder, $outputSizes, $_tempFolder, $withSizeCheck = true) {
 
 	$_fileNames = array();
 
 	global $IMAGE_EXTENSION;
-	if (images_convertToJPEG($folder.$fileName) === false) {
+	if (images_convertToJPEG($folder.$fileName, $_tempFolder) === false) {
+		// functions_totalRemoveFileOrDir($_tempFolder);
 		// functions_errorOutput('некорректный формат изображения: ' . $folder.$fileName, 400);
 		return false;
 	}
