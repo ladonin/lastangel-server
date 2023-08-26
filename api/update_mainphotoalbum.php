@@ -85,13 +85,14 @@ if (isset($_FILES['another_images'])) {
 
 		// Грузим в temp
 		if(move_uploaded_file($_path, $_pathAnother)) {
-			$_anotherImages = array_merge($_anotherImages, images_localSave($_anotherFileName, $_tempFolder, $IMAGES_ANOTHER_SIZES));
+			$_anotherImages = array_merge($_anotherImages, images_localSave($_anotherFileName, $_tempFolder, $IMAGES_ANOTHER_SIZES, $_tempFolder));
 			// + Исходник
 
 			$_anotherImages[]=$_anotherFileName;
 			// Сохраняем только номер фото (размеры и расширение фронт знает)
 			$_anotherImagesDb[] = $_newNumber + $_index;
 		} else {
+			functions_totalRemoveFileOrDir($_tempFolder);
 			functions_errorOutput('ошибка дополнительного фото: ' . $_path . ' в ' . $_pathAnother, 500);
 		}
 	}

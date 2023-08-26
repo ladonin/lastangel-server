@@ -1,6 +1,6 @@
 <?php
-$IMAGES_MIN_WIDTH = 1200;
-$IMAGES_MIN_HEIGHT = 600;
+$IMAGES_MIN_WIDTH = 900;
+$IMAGES_MIN_HEIGHT = 900;
 $IMAGES_MAX_WIDTH = 20000;
 $IMAGES_MAX_HEIGHT = 20000;
 
@@ -22,13 +22,13 @@ $IMAGES_MAIN_SIZES = array(
 
 
 
-function images_checkProportions($file, $w, $h, $_tempFolder, $die = true) {
+function images_checkProportions($file, $w, $h, $tempFolder, $die = true) {
   list($_width, $_height, $_type, $_attr) = getimagesize($file);
   $_result = $_width/$_height === $w/$h;
 
   if (!$_result) {
 	  if ($die) {
-		functions_totalRemoveFileOrDir($_tempFolder);
+		functions_totalRemoveFileOrDir($tempFolder);
 		functions_errorOutput('некорректные пропорции изображения: ' . $file . ', ' . $_width . 'x' . $_height . ', ' . $w . 'x' . $h, 400);
 	  } else {
 		 return $_result;
@@ -74,21 +74,24 @@ function images_checkType($file, $die = true) {
 }
 
 
-function images_checkSizes($file, $die = true) {
-  list($_width, $_height, $_type) = getimagesize($file);
-  $_result = $_width > $IMAGES_MIN_WIDTH && $_width < $IMAGES_MAX_WIDTH && $_height > $IMAGES_MIN_HEIGHT && $_height < $IMAGES_MAX_HEIGHT;
+function images_checkSizes($file, $tempFolder, $die = true) {
+	global $IMAGES_MIN_WIDTH, $IMAGES_MAX_WIDTH, $IMAGES_MIN_HEIGHT, $IMAGES_MAX_HEIGHT;
+    list($_width, $_height, $_type) = getimagesize($file);
+    $_result = $_width > $IMAGES_MIN_WIDTH && $_width < $IMAGES_MAX_WIDTH && $_height > $IMAGES_MIN_HEIGHT && $_height < $IMAGES_MAX_HEIGHT;
 
-  if (!$_result) {
+    if (!$_result) {
 	  if ($die) {
-		functions_totalRemoveFileOrDir($file);
+		functions_totalRemoveFileOrDir($tempFolder);
 		functions_errorOutput('#1 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
 	  } else {
 		 return $_result;
 	  }
-  }
+    }
 }
 
-function images_calculateRealSizes($file, $width, $height, $withSizeCheck = true) {
+function images_calculateRealSizes($file, $width, $height, $tempFolder, $withSizeCheck = false) {
+
+	images_checkSizes($file, $tempFolder, true);
 
 	list($_width, $_height) = getimagesize($file);
 
@@ -96,10 +99,25 @@ function images_calculateRealSizes($file, $width, $height, $withSizeCheck = true
 	$_newHeight = null;
 
 
-	if ($withSizeCheck === true && $_width < $width && $_height < $height) {
+	if ($_width < $width && $_height < $height) {
 		// Слишком мелкая
-		functions_totalRemoveFileOrDir($file);
-		functions_errorOutput('#2 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
+		if ($withSizeCheck === true) {
+			functions_totalRemoveFileOrDir($tempFolder);
+			functions_errorOutput('#2 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
+		} else {
+			// Увеличим размер искусственно с потерей качества ((
+			// Тут - чем меньше пропорция, тем ближе к желаемому значению
+			$_widthProportion = ($width - $_width)/$width;
+			$_heightProportion = ($height - $_height)/$height;
+
+			if ($_widthProportion < $_heightProportion) {
+				$_newWidth = $width;
+				$_newHeight = intval($_height*(1+$_widthProportion));
+			} else {
+				$_newHeight = $height;
+				$_newWidth = intval($_width*(1+$_heightProportion));
+			}
+		}
 	} else if ($_width >= $width && $_height < $height) {
 		// Годная по ширине
 		$_newWidth = $width;
@@ -115,7 +133,6 @@ function images_calculateRealSizes($file, $width, $height, $withSizeCheck = true
 		// Цель - чтобы при уменьшении одной стороны, другая сторона не осталась больше допустимого размера
 		$_widthProportion = ($_width - $width)/$width;
 		$_heightProportion = ($_height - $height)/$height;
-		
 		if ($_widthProportion > $_heightProportion) {
 			$_newWidth = $width;
 			$_newHeight = intval(($_newWidth/$_width)*$_height);
@@ -124,14 +141,15 @@ function images_calculateRealSizes($file, $width, $height, $withSizeCheck = true
 			$_newWidth = intval(($_newHeight/$_height)*$_width);
 		}
 	}
-	
+	var_dump($_newWidth);
+	var_dump($_newHeight);
 	if ($_newWidth && $_newHeight) {
 		return array(
 			'width'=> $_newWidth,
 			'height'=> $_newHeight
 		);
 	}
-	functions_totalRemoveFileOrDir($file);
+	functions_totalRemoveFileOrDir($tempFolder);
 	functions_errorOutput('ошибка расчета итоговых габаритов изображения: ' . $file . ', ' . $_width . 'x' . $_height . ', ' . $width . 'x' . $height, 500);
 }
 
@@ -161,10 +179,14 @@ function images_convertToJPEG($file, $_tempFolder) {
 	
 }
 
-function images_createResizedCopy($file, $outputImage, $width, $height, $withSizeCheck = true) {
+function images_createResizedCopy($file, $outputImage, $width, $height, $tempFolder, $withSizeCheck = false) {
+	
+	
+	
+	
 	
 	list($_srcWidth, $_srcHeight) = getimagesize($file);
-	$_sizes = images_calculateRealSizes($file, $width, $height, $withSizeCheck);
+	$_sizes = images_calculateRealSizes($file, $width, $height, $tempFolder, $withSizeCheck);
 	$_thumb = imagecreatetruecolor($_sizes['width'], $_sizes['height']);
 	$_source = imagecreatefromjpeg($file);
 	imagecopyresampled($_thumb, $_source, 0, 0, 0, 0, $_sizes['width'], $_sizes['height'], $_srcWidth, $_srcHeight);
@@ -178,13 +200,13 @@ function images_createResizedCopy($file, $outputImage, $width, $height, $withSiz
  * @param $outputSizes - список размеров {code => {width, height}}[]
  * @return список путей до файлов, которые создали на основе исходника
  */
-function images_localSave($fileName, $folder, $outputSizes, $_tempFolder, $withSizeCheck = true) {
+function images_localSave($fileName, $folder, $outputSizes, $tempFolder, $withSizeCheck = false) {
 
 	$_fileNames = array();
 
 	global $IMAGE_EXTENSION;
-	if (images_convertToJPEG($folder.$fileName, $_tempFolder) === false) {
-		// functions_totalRemoveFileOrDir($_tempFolder);
+	if (images_convertToJPEG($folder.$fileName, $tempFolder) === false) {
+		// functions_totalRemoveFileOrDir($tempFolder);
 		// functions_errorOutput('некорректный формат изображения: ' . $folder.$fileName, 400);
 		return false;
 	}
@@ -194,7 +216,7 @@ function images_localSave($fileName, $folder, $outputSizes, $_tempFolder, $withS
 	foreach ($outputSizes as $_code => $_size) {
 		$_newFileName = $_newFileNamePart.'_'.$_code.$IMAGE_EXTENSION;
 		$_fileNames[]=$_newFileName;
-		images_createResizedCopy($folder.$fileName, $folder.$_newFileName, $_size['width'], $_size['height'], $withSizeCheck);
+		images_createResizedCopy($folder.$fileName, $folder.$_newFileName, $_size['width'], $_size['height'], $tempFolder, $withSizeCheck);
 	}
 
 	return $_fileNames;
