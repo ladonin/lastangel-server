@@ -10,11 +10,11 @@ $IMAGES_TEMPFOLDER_PATH = 'tempfiles/';
 
 $IMAGES_ANOTHER_SIZES = array(
 	'1'=>array('width'=>1200, 'height'=>1200),
-	'2'=>array('width'=>450, 'height'=>450)
+	'2'=>array('width'=>600, 'height'=>600)
 	);
 $IMAGES_MAIN_SIZES = array(
-	'square'=>array('width'=>450, 'height'=>450),
-	'square2'=>array('width'=>180, 'height'=>180),
+	'square'=>array('width'=>600, 'height'=>600),
+	'square2'=>array('width'=>300, 'height'=>300),
 	'1'=>array('width'=>1200, 'height'=>1200)
 );
 
