@@ -18,7 +18,7 @@ animals.short_description,
 animals.sex,
 animals.grafted,
 animals.sterilized,
-animals.category,
+animals.kind,
 animals.status,
 animals.is_published,
 animals.ismajor,
@@ -58,10 +58,31 @@ if (isset($_GET['sterilized'])) {
 	$_params[] = $_GET['sterilized'];
 	$_params_types.='i';
 }
-if (isset($_GET['category'])) {
-	$_sql.="AND animals.category = ? ";
-	$_params[] = $_GET['category'];
-	$_params_types.='i';
+
+if (isset($_GET['kind'])) {
+	$_sql.="AND (";
+	foreach ($_GET['kind'] as $key => $value) {
+		if ($key > 0) {
+			$_sql.=" OR ";
+		}
+		$_sql.="(animals.kind = ? ";
+		$_params[] = $_GET['kind'][$key];
+		$_params_types.='i';
+
+		if (isset($_GET['minbirthdate']) && $_GET['minbirthdate'][$key]) {
+			$_sql.="AND animals.birthdate >= ? ";
+			$_params[] = $_GET['minbirthdate'][$key];
+			$_params_types.='i';
+		}
+
+		if (isset($_GET['maxbirthdate']) && $_GET['maxbirthdate'][$key]) {
+			$_sql.="AND animals.birthdate <= ? ";
+			$_params[] = $_GET['maxbirthdate'][$key];
+			$_params_types.='i';
+		}
+		$_sql.=") ";
+	}
+	$_sql.=") ";
 }
 
 if (isset($_GET['notPublished']) && $_GET['notPublished'] === '1') {
@@ -107,9 +128,10 @@ if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_G
 	$_type = $_GET['order_type'];
 	if (($_order === 'id'
 	 || $_order === 'birthdate'
+	 || $_order === 'name'
 	 || $_order === 'grafted'
 	 || $_order === 'sterilized'
-	 || $_order === 'category'
+	 || $_order === 'kind'
 	 || $_order === 'status'
 	 || $_order === 'ismajor'
 	 || $_order === 'month_collect'
@@ -134,7 +156,6 @@ $_stmt = $db_mysqli->prepare($_sql);
 if ($_params_types) {
 	$_stmt->bind_param($_params_types, ...$_params);
 }
-
 
 $_stmt->execute();
 $_result = $_stmt->get_result();
