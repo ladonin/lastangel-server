@@ -1,6 +1,6 @@
 <?php
-$IMAGES_MIN_WIDTH = 900;
-$IMAGES_MIN_HEIGHT = 900;
+$IMAGES_MIN_WIDTH = 600;
+$IMAGES_MIN_HEIGHT = 600;
 $IMAGES_MAX_WIDTH = 20000;
 $IMAGES_MAX_HEIGHT = 20000;
 
@@ -77,12 +77,12 @@ function images_checkType($file, $die = true) {
 function images_checkSizes($file, $tempFolder, $die = true) {
 	global $IMAGES_MIN_WIDTH, $IMAGES_MAX_WIDTH, $IMAGES_MIN_HEIGHT, $IMAGES_MAX_HEIGHT;
     list($_width, $_height, $_type) = getimagesize($file);
-    $_result = $_width > $IMAGES_MIN_WIDTH && $_width < $IMAGES_MAX_WIDTH && $_height > $IMAGES_MIN_HEIGHT && $_height < $IMAGES_MAX_HEIGHT;
+    $_result = $_width >= $IMAGES_MIN_WIDTH && $_width <= $IMAGES_MAX_WIDTH && $_height >= $IMAGES_MIN_HEIGHT && $_height <= $IMAGES_MAX_HEIGHT;
 
     if (!$_result) {
 	  if ($die) {
 		functions_totalRemoveFileOrDir($tempFolder);
-		functions_errorOutput('#1 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
+		functions_errorOutput('#1 некорректный размер фото: ' . $file . ', ' . $_width . 'x' . $_height, 400);
 	  } else {
 		 return $_result;
 	  }
@@ -103,20 +103,19 @@ function images_calculateRealSizes($file, $width, $height, $tempFolder, $withSiz
 		// Слишком мелкая
 		if ($withSizeCheck === true) {
 			functions_totalRemoveFileOrDir($tempFolder);
-			functions_errorOutput('#2 фото слишком мелкое: ' . $file . ', ' . $_width . 'x' . $_height, 400);
+			functions_errorOutput('#2 некорректный размер фото: ' . $file . ', ' . $_width . 'x' . $_height, 400);
 		} else {
 			// Увеличим размер искусственно с потерей качества ((
 			// Тут - чем меньше пропорция, тем ближе к желаемому значению
 			$_widthProportion = ($width - $_width)/$width;
 			$_heightProportion = ($height - $_height)/$height;
-
-			if ($_widthProportion < $_heightProportion) {
+			if ($_widthProportion == $_heightProportion) {
 				$_newWidth = $width;
-				$_newHeight = intval($_height*(1+$_widthProportion));
+				$_newHeight = intval(($_newWidth/$_width)*$_height);
 			} else {
 				$_newHeight = $height;
-				$_newWidth = intval($_width*(1+$_heightProportion));
-			}
+				$_newWidth = intval(($_newHeight/$_height)*$_width);
+			}	
 		}
 	} else if ($_width >= $width && $_height < $height) {
 		// Годная по ширине
@@ -141,8 +140,7 @@ function images_calculateRealSizes($file, $width, $height, $tempFolder, $withSiz
 			$_newWidth = intval(($_newHeight/$_height)*$_width);
 		}
 	}
-	var_dump($_newWidth);
-	var_dump($_newHeight);
+
 	if ($_newWidth && $_newHeight) {
 		return array(
 			'width'=> $_newWidth,
