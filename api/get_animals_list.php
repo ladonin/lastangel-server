@@ -116,10 +116,9 @@ if (isset($_GET['statusExclude'])) {
 	}
 }
 
-if (isset($_GET['ismajor'])) {
-	$_sql.="AND animals.ismajor  = ? ";
-	$_params[] = $_GET['ismajor'];
-	$_params_types.='i';
+
+if (isset($_GET['isMajor']) && $_GET['isMajor'] === '1') {
+	$_sql.="AND animals.ismajor = 1 ";
 }
 
 if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
@@ -127,6 +126,7 @@ if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_G
 	$_order = $_GET['order'];
 	$_type = $_GET['order_type'];
 	if (($_order === 'id'
+	 || $_order === 'ismajor, id'
 	 || $_order === 'birthdate'
 	 || $_order === 'name'
 	 || $_order === 'grafted'
