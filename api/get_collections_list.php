@@ -12,7 +12,42 @@ require('@imports.php');
 // 5 дней закрытые сборы отображаются
 $_closeStatusTimeCondition = time() - 3600*24*5;
 
-$_sql = "SELECT collections.*, donations.sum as collected FROM `collections` LEFT JOIN (SELECT SUM(sum) as sum, target_id FROM `donations` WHERE type=2  GROUP BY target_id) donations ON donations.target_id = collections.id WHERE 1 ";
+
+
+
+
+$_with_corrupted = 0;
+if (isset($_GET['with_corrupted']) && $_GET['with_corrupted']) {
+	$_with_corrupted = 1;
+}
+
+
+$_sql = "SELECT collections.*, donations.sum as collected, animals.id as anim_id_real,
+
+
+
+CASE
+    WHEN animals.id IS NULL AND (collections.type = 1 OR collections.type = 2)
+        THEN 1
+    ELSE 0
+END AS is_corrupted
+
+
+
+
+
+FROM `collections` 
+LEFT JOIN (SELECT SUM(sum) as sum, target_id, type FROM `donations` 
+	WHERE type=2  GROUP BY target_id) donations 
+ON donations.target_id = collections.id
+
+
+LEFT JOIN animals 
+ON collections.animal_id = animals.id AND (collections.type=1 OR collections.type=2)
+
+
+
+ WHERE NOT (".($_with_corrupted ? "0" : "1")." AND animals.id IS NULL AND (collections.type = 1 OR collections.type = 2)) ";
 
 $_params = array();
 $_params_types = "";
@@ -31,7 +66,7 @@ if (isset($_GET['type'])) {
 /////////////
 if (isset($_GET['status'])) {
 	if (isset($_GET['withClosedCollections'])) {
-		$_sql.="AND (collections.status = ? OR (collections.status = 3 AND updated > $_closeStatusTimeCondition)) ";
+		$_sql.="AND (collections.status = ? OR (collections.status = 3 AND collections.updated > $_closeStatusTimeCondition)) ";
 		$_params[] = $_GET['status'];
 		$_params_types.='i';	
 	} else {
@@ -40,7 +75,7 @@ if (isset($_GET['status'])) {
 		$_params_types.='i';	
 	}
 } else if (isset($_GET['withClosedCollections'])) {
-		$_sql.="AND (collections.status = 1 OR collections.status = 2 OR (collections.status = 3 AND updated > $_closeStatusTimeCondition)) ";	
+		$_sql.="AND (collections.status = 1 OR collections.status = 2 OR (collections.status = 3 AND collections.updated > $_closeStatusTimeCondition)) ";	
 }
 /////////////
 
@@ -78,7 +113,7 @@ if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_G
 	 || $_order === 'updated')
 		&& (strtolower($_type) === 'asc' 
 		|| strtolower($_type) === 'desc'))	 {
-	$_sql.="ORDER BY " . $_order . " " . $_type . " ";
+	$_sql.="ORDER BY collections." . $_order . " " . $_type . " ";
 	}
 }
 
