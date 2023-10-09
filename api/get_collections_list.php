@@ -98,7 +98,14 @@ if (isset($_GET['ismajor'])) {
 
 
 
-if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
+if (isset($_GET['orderComplex']) && $_GET['orderComplex']) {
+	$_orderComplex = $_GET['orderComplex'];
+	if (
+		$_orderComplex === 'ismajor desc, status asc'
+	) {
+		$_sql.="ORDER BY " . $_orderComplex . " ";
+	}
+} else if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
 
 	$_order = $_GET['order'];
 	$_type = $_GET['order_type'];

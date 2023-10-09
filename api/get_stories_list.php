@@ -36,9 +36,22 @@ if (isset($_GET['excludeStatus'])) {
 	$_params_types.='i';
 }
 
-$_order = (isset($_GET['order']) && strtolower($_GET['order']) === 'asc') ? 'ASC' : 'DESC';
 
-$_sql.="ORDER by created " . $_order . " ";
+
+if (isset($_GET['orderComplex']) && $_GET['orderComplex']) {
+	$_orderComplex = $_GET['orderComplex'];
+	if (
+		$_orderComplex === 'ismajor desc, id desc'
+	) {
+		$_sql.="ORDER BY " . $_orderComplex . " ";
+	}
+} else {
+	$_order = (isset($_GET['order']) && strtolower($_GET['order']) === 'asc') ? 'ASC' : 'DESC';
+	$_sql.="ORDER by id " . $_order . " ";
+}
+
+
+
 
 $_limit = (isset($_GET['limit']) && $_GET['limit']) ? intval(trim($_GET['limit'])) : 20;
 $_limit = $_limit ? $_limit : 20;

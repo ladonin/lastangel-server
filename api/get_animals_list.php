@@ -121,7 +121,17 @@ if (isset($_GET['isMajor']) && $_GET['isMajor'] === '1') {
 	$_sql.="AND animals.ismajor = 1 ";
 }
 
-if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
+
+
+if (isset($_GET['orderComplex']) && $_GET['orderComplex']) {
+	$_orderComplex = $_GET['orderComplex'];
+	if (
+		$_orderComplex === 'ismajor desc, id desc' || 
+		$_orderComplex === 'ismajor asc, id asc'
+	) {
+		$_sql.="ORDER BY " . $_orderComplex . " ";
+	}
+} else if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
 
 	$_order = $_GET['order'];
 	$_type = $_GET['order_type'];
