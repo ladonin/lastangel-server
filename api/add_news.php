@@ -4,7 +4,9 @@ require('@outer_storage.php');
 require('@images_processor.php');
 require('@videos_processor.php');
 require('@news_common.php');
+require('@seo.php');
 auth_verify([$ADMIN_ROLE]);
+createSitemap('news');
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
 
 $_json = $_POST['data'];

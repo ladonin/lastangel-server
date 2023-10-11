@@ -4,9 +4,11 @@ require('@outer_storage.php');
 require('@images_processor.php');
 require('@videos_processor.php');
 require('@animals_common.php');
+require('@seo.php');
+
 auth_verify([$ADMIN_ROLE]);
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
-
+createSitemap('pets');
 $_json = $_POST['data'];
 
 $_data = array();

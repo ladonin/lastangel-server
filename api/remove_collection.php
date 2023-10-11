@@ -3,7 +3,9 @@ require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
 require('@collections_common.php');
+require('@seo.php');
 auth_verify([$ADMIN_ROLE]);
+createSitemap('collections');
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
 
 $_recordId = intval($_GET['id']);

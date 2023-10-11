@@ -3,7 +3,9 @@ require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
 require('@stories_common.php');
+require('@seo.php');
 auth_verify([$ADMIN_ROLE]);
+createSitemap('stories');
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
 
 $_recordId = intval($_GET['id']);
