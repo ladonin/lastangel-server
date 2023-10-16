@@ -7,7 +7,7 @@ if (!isset($_GET['target_id']) || !intval($_GET['target_id']) || !isset($_GET['t
 
 $_targetId = intval($_GET['target_id']);
 $_type = intval($_GET['type']);
-
+$_limitTimeCondition = time() - 3600*24*30;
 
 $_stmt = $db_mysqli->prepare("
 SELECT 
@@ -15,7 +15,7 @@ SELECT
 	donators.fullname as donator_fullname, 
 	donators.id as donator_id,
 	donators.link_to_page as donator_outer_link
-FROM (SELECT * FROM donations WHERE donations.target_id=$_targetId AND donations.type=$_type) donations
+FROM (SELECT * FROM donations WHERE donations.target_id=$_targetId AND donations.type=$_type AND created > $_limitTimeCondition) donations
 LEFT JOIN donators ON 
 	LOWER(donators.firstname) = LOWER(donations.donator_firstname) 
 	AND LOWER(donators.middlename) = LOWER(donations.donator_middlename) 
