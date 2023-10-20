@@ -167,20 +167,23 @@ $_anotherImagesDb = [];
 
 // Главное фото -->
 // Если приложили новый файл - перезаписываем
-if (isset($_FILES['main_image'])) {
-	$_mainFileName = "main".$IMAGE_EXTENSION;
-	$_pathMain = $_tempFolder.$_mainFileName;
+if (isset($_FILES['main_image_cropped']) && isset($_FILES['main_image_original'])) {
+	$_mainCroppedFileName = "main_cropped".$IMAGE_EXTENSION;
+	$_pathCroppedMain = $_tempFolder.$_mainCroppedFileName;
+	$_mainOriginalFileName = "main".$IMAGE_EXTENSION;
+	$_pathMainOriginal = $_tempFolder.$_mainOriginalFileName;
 
 	// Грузим исходник в temp
-	if(move_uploaded_file($_FILES['main_image']['tmp_name'],$_pathMain)) {
-		images_checkProportions($_pathMain, 1, 1, $_tempFolder);
+	if(move_uploaded_file($_FILES['main_image_cropped']['tmp_name'],$_pathCroppedMain) && move_uploaded_file($_FILES['main_image_original']['tmp_name'],$_pathMainOriginal)) {
+		images_checkProportions($_pathCroppedMain, 1, 1, $_tempFolder);
 
-		$_mainImages = images_localSave($_mainFileName, $_tempFolder, $IMAGES_MAIN_SIZES, $_tempFolder);
+		$_mainImages = images_localSave($_mainCroppedFileName, $_tempFolder, $IMAGES_MAIN_SQUARE_SIZES, $_tempFolder, false, "main");
+		$_mainImages = array_merge($_mainImages, images_localSave($_mainOriginalFileName, $_tempFolder, $IMAGES_MAIN_SIZES, $_tempFolder, false, "main"));
 		// + Исходник
-		$_mainImages[] = $_mainFileName;
+		$_mainImages[] = $_mainOriginalFileName;
 	} else {
 		functions_totalRemoveFileOrDir($_tempFolder);
-		functions_errorOutput('ошибка загрузки главного фото: ' . $_FILES['main_image']['name'] . ' в ' . $_pathMain, 500);
+		functions_errorOutput('ошибка загрузки главного фото: ' . $_FILES['main_image_cropped']['name'] . ' в ' . $_pathCroppedMain, 500);
 	}
 }
 // <-- Главное фото

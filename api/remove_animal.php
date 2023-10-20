@@ -46,8 +46,8 @@ foreach ($_another_images as $_number) {
 }
 
 if ($_main_image === '1') {
-	$_filesSizeNames = images_getFileSizeNames('main', '', $IMAGES_MAIN_SIZES);
-
+	$_filesSizeNames = array_unique(array_merge(images_getFileSizeNames('main', '', $IMAGES_MAIN_SIZES), images_getFileSizeNames('main', '', $IMAGES_MAIN_SQUARE_SIZES)));
+var_dump($_filesSizeNames);
 	foreach ($_filesSizeNames as $_fileName) {
 		outerStorage_removeFile($_fileName, 'pets/'.$_recordId);
 	}

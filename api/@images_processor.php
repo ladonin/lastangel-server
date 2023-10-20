@@ -12,12 +12,13 @@ $IMAGES_ANOTHER_SIZES = array(
 	'1'=>array('width'=>1200, 'height'=>1200),
 	'2'=>array('width'=>600, 'height'=>600)
 	);
-$IMAGES_MAIN_SIZES = array(
+$IMAGES_MAIN_SQUARE_SIZES = array(
 	'square'=>array('width'=>600, 'height'=>600),
 	'square2'=>array('width'=>300, 'height'=>300),
+);
+$IMAGES_MAIN_SIZES = array(
 	'1'=>array('width'=>1200, 'height'=>1200)
 );
-
 
 
 
@@ -198,7 +199,7 @@ function images_createResizedCopy($file, $outputImage, $width, $height, $tempFol
  * @param $outputSizes - список размеров {code => {width, height}}[]
  * @return список путей до файлов, которые создали на основе исходника
  */
-function images_localSave($fileName, $folder, $outputSizes, $tempFolder, $withSizeCheck = false) {
+function images_localSave($fileName, $folder, $outputSizes, $tempFolder, $withSizeCheck = false, $pseudoName = false) {
 
 	$_fileNames = array();
 
@@ -209,7 +210,7 @@ function images_localSave($fileName, $folder, $outputSizes, $tempFolder, $withSi
 		return false;
 	}
 	
-	$_newFileNamePart = mb_strimwidth($fileName, 0, strrpos($fileName, $IMAGE_EXTENSION));
+	$_newFileNamePart = $pseudoName ? $pseudoName : mb_strimwidth($fileName, 0, strrpos($fileName, $IMAGE_EXTENSION));
 	
 	foreach ($outputSizes as $_code => $_size) {
 		$_newFileName = $_newFileNamePart.'_'.$_code.$IMAGE_EXTENSION;
