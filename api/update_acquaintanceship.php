@@ -3,7 +3,7 @@ require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
 require('@videos_processor.php');
-require('@news_common.php');
+require('@acquaintanceship_common.php');
 auth_verify([$ADMIN_ROLE]);
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
 
@@ -15,39 +15,22 @@ if ($_json) {
   $_data = get_object_vars(json_decode($_json));
 }
 
-newsCommon_checkRequestTextData($_data);
+acquaintanceshipCommon_checkRequestTextData($_data);
 
-$_recordId = intval($_GET['id']);
-
-if (!$_recordId) {
-	functions_errorOutput('Некорректный запрос. id:' . $_recordId, 400);
-}
-
-
-$_stmt = $db_mysqli->prepare("UPDATE news
+$_stmt = $db_mysqli->prepare("UPDATE acquaintanceship
 
 SET 
-	name=?,
-	short_description=?,
 	description=?,
-	ismajor=?,
 	hide_album=?,
-	status=?,
 	updated=?
-WHERE id=$_recordId");
+WHERE id=1");
 $_now = time();
-$_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
 $_hide_album = isset($_data['hide_album']) ? $_data['hide_album'] : 0;
-$_status = isset($_data['status']) ? $_data['status'] : 1;
 
 
-$_stmt->bind_param("sssiiii", 
-	$_data['name'],
-	$_data['short_description'], 
+$_stmt->bind_param("sii", 
 	$_data['description'], 
-	$_ismajor,
 	$_hide_album,
-	$_status,
 	$_now
  );
 
@@ -57,14 +40,13 @@ $_stmt->execute();
 
 ///////////////////// --> ВИДЕО
 // Приходит либо текст - не трогаем, либо файл - заменяем (даже, если названия совпадают), либо пусто - удаляем
-$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'news/'.$_recordId.'/';
+$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'acquaintanceship/';
 if (!is_dir($_videoTempFolder) && !mkdir($_videoTempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_videoTempFolder, 500);
 }
 
 function processVideo($name) {
 	global $db_mysqli;
-	global $_recordId;
 	global $_videoTempFolder;
 	if (isset($_FILES[$name]) && $_FILES[$name]) {
 		// Если пришел файл, то надо добавить/поменять
@@ -73,7 +55,7 @@ function processVideo($name) {
 		videos_checkSize($video, $_videoTempFolder);
 		
 		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM news WHERE id='$_recordId'");
+		$_res = $db_mysqli->query("SELECT $name FROM acquaintanceship WHERE id=1");
 		$_row = $_res->fetch_assoc();
 		$_oldVideo = $_row[$name];
 
@@ -83,9 +65,9 @@ function processVideo($name) {
 		// Грузим исходник в temp
 		if(move_uploaded_file($_FILES[$name]['tmp_name'], $_pathVideo)) {
 			// Загружаем на внешнее хранилище
-			$_oldVideo && outerStorage_removeFile($_oldVideo, 'news/'.$_recordId);
-			outerStorage_uploadFile($_pathVideo, 'news/'.$_recordId);
-			$db_mysqli->query("UPDATE news SET $name = '$_videoFileName' WHERE id = '$_recordId'");
+			$_oldVideo && outerStorage_removeFile($_oldVideo, 'acquaintanceship');
+			outerStorage_uploadFile($_pathVideo, 'acquaintanceship');
+			$db_mysqli->query("UPDATE acquaintanceship SET $name = '$_videoFileName' WHERE id = 1");
 		} else {
 			functions_totalRemoveFileOrDir($_videoTempFolder);
 			functions_errorOutput('ошибка загрузки видео: ' . $_FILES[$name]['name'] . ' в ' . $_pathVideo, 500);
@@ -93,13 +75,13 @@ function processVideo($name) {
 	} else if (isset($_POST[$name]) && $_POST[$name] === '') {
 		// Возможно, надо удалить видео из хранилища и базы, т.к. пришел пустой результат в ответе от клиента
 		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM news WHERE id='$_recordId'");
+		$_res = $db_mysqli->query("SELECT $name FROM acquaintanceship WHERE id=1");
 		$_row = $_res->fetch_assoc();
 		$_oldVideo = $_row[$name];
 		if ($_oldVideo) {
 			// Да, видео есть и, следовательно, его надо удалить
-			outerStorage_removeFile($_oldVideo, 'news/'.$_recordId);
-			$db_mysqli->query("UPDATE news SET $name = '' WHERE id = '$_recordId'");
+			outerStorage_removeFile($_oldVideo, 'acquaintanceship');
+			$db_mysqli->query("UPDATE acquaintanceship SET $name = '' WHERE id = 1");
 		}
 	}
 	// Если придет $_POST[$name] с текстом, то, значит, старое видео не тронуто
@@ -113,13 +95,13 @@ processVideo('video3');
 ///////////////////// <-- ВИДЕО
 
 ///////////////////// --> ФОТО ФАЙЛЫ
-$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'news/'.$_recordId.'/';
+$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'acquaintanceship/';
 if (!is_dir($_tempFolder) && !mkdir($_tempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_tempFolder, 500);
 }
 
 // Выбираем значение photos до перезаписи
-$_res = $db_mysqli->query("SELECT another_images FROM news WHERE id=$_recordId");
+$_res = $db_mysqli->query("SELECT another_images FROM acquaintanceship WHERE id=1");
 $_row = $_res->fetch_assoc();
 
 $_another_images = json_decode($_row['another_images']);
@@ -140,7 +122,7 @@ if (isset($_data['another_images_for_delete'])) {
 		$_filesSizeNames = images_getFileSizeNames('another', $_number, $IMAGES_ANOTHER_SIZES);
 		
 		foreach ($_filesSizeNames as $_fileName) {
-			outerStorage_removeFile($_fileName, 'news/'.$_recordId);
+			outerStorage_removeFile($_fileName, 'acquaintanceship');
 		}
 	}
 
@@ -186,7 +168,7 @@ if (isset($_FILES['another_images'])) {
 
 // --> Загружаем на внешнее хранилище
 	foreach ($_anotherImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'news/'.$_recordId);
+		outerStorage_uploadFile($_tempFolder.$_path, 'acquaintanceship');
 	}
 // <-- Загружаем на внешнее хранилище
 
@@ -204,8 +186,8 @@ functions_totalRemoveFileOrDir($_tempFolder);
 
 $_another_photosJSON= json_encode($_anotherImagesDb);
 
-$db_mysqli->query("UPDATE news SET another_images = '". $_another_photosJSON ."' WHERE id = '".$_recordId."'");
+$db_mysqli->query("UPDATE acquaintanceship SET another_images = '". $_another_photosJSON ."' WHERE id = 1");
 ///////////////////// <-- ФОТО В БД
 
-functions_successOutput($_recordId);
+functions_successOutput('ok');
 ?>

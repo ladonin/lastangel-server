@@ -336,6 +336,61 @@ while($_row = $_result->fetch_array()){
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+$_stmt = $db_mysqli->prepare("SELECT id, another_images, video1, video2, video3 from acquaintanceship");
+
+$_stmt->execute();
+$_result = $_stmt->get_result();
+while($_row = $_result->fetch_array()){
+	$another_images = json_decode($_row['another_images']);
+	@mkdir("media/acquaintanceship");
+	if ($_row['video1']) {
+			file_put_contents(
+				"media/acquaintanceship/video1.mp4", 
+				fopen("https://140706.selcdn.ru/lastangel/media/acquaintanceship/video1.mp4", 'r')
+			);
+	}
+		if ($_row['video2']) {
+			file_put_contents(
+				"media/acquaintanceship/video2.mp4", 
+				fopen("https://140706.selcdn.ru/lastangel/media/acquaintanceship/video2.mp4", 'r')
+			);
+	}
+			if ($_row['video3']) {
+			file_put_contents(
+				"media/acquaintanceship/video3.mp4", 
+				fopen("https://140706.selcdn.ru/lastangel/media/acquaintanceship/video3.mp4", 'r')
+			);
+	}
+			
+	if (count($another_images) > 0) {
+		foreach ($another_images as $another_image) {
+			file_put_contents(
+				"media/acquaintanceship/another_".$another_image.".jpeg", 
+				fopen("https://140706.selcdn.ru/lastangel/media/acquaintanceship/another_".$another_image.".jpeg", 'r')
+			);
+			//file_put_contents(
+			//	"media/acquaintanceship/another_".$another_image."_1.jpeg", 
+			//	fopen("https://140706.selcdn.ru/lastangel/media/acquaintanceship/another_".$another_image."_1.jpeg", 'r')
+			//);
+			//file_put_contents(
+			//	"media/acquaintanceship/another_".$another_image."_2.jpeg", 
+			//	fopen("https://140706.selcdn.ru/lastangel/media/acquaintanceship/another_".$another_image."_2.jpeg", 'r')
+			//);
+		}
+	}
+}
 ?>
 
 
