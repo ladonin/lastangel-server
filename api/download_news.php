@@ -31,13 +31,13 @@ function prepareText($text) {
 	$_text = str_replace(array("\r\n", "\n", "\r"),' ',$text);
 	return $_text;
 }
-function prepareTags($text) {
+function prepareTags($text) {return $text;
 	$_text = str_replace('<p>','',$text);
 	$_text = str_replace('</p>',"",$_text);
 	$_text = str_replace('&nbsp;'," ",$_text);
 	return $_text;
 }
-function prepareTags2($text) {
+function prepareTags2($text) {return $text;
 	$_text = str_replace('<p>','',$text);
 	$_text = str_replace('</p>',"<br/>",$_text);
 	$_text = str_replace('&nbsp;'," ",$_text);
@@ -53,8 +53,8 @@ while($_row = $_result->fetch_array()){
 	if ($_type === 'txt') {
 		$_data.="#id: ".$_row['id']."\n";
 		$_data.="#Заголовок: ".$_row['name']."\n";
-		$_data.="#Краткое описание: ". trim(prepareTags($_row['short_description']))."\n";
-		$_data.="#Описание: ". trim(prepareTags($_row['description']))."\n";
+		$_data.="#Краткое описание: ". $_row['short_description']."\n";
+		$_data.="#Описание: ". $_row['description']."\n";
 		$_data.="#Статус: ". convertStatus($_row['status'])."\n";
 		$_data.="#Дата создания: ".date('d.m.Y H:i:s',$_row['created'])."\n";
 		$_data.="#Дата последнего обновления: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."\n";
@@ -63,8 +63,8 @@ while($_row = $_result->fetch_array()){
 	if ($_type === 'html') {
 		$_data.="<b>id</b>: ".$_row['id']."<br/>";
 		$_data.="<b>Заголовок</b>: ".$_row['name']."<br/>";
-		$_data.="<b>Краткое описание</b>: ".trim(prepareTags2($_row['short_description']), "<br\/> \n\r\t\v\x00")."<br/>";
-		$_data.="<b>Описание</b>: ".trim(prepareTags2($_row['description']), "<br\/> \n\r\t\v\x00")."<br/>";
+		$_data.="<b>Краткое описание</b>: ".$_row['short_description']."<br/>";
+		$_data.="<b>Описание</b>: ".$_row['description']."<br/>";
 		$_data.="<b>Статус</b>: ".convertStatus($_row['status'])."<br/>";
 		$_data.="<b>Дата создания</b>: ".date('d.m.Y H:i:s',$_row['created'])."<br/>";
 		$_data.="<b>Дата последнего обновления</b>: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."<br/>";
@@ -73,8 +73,8 @@ while($_row = $_result->fetch_array()){
 	if ($_type === 'csv') {
 		$_data.=$_row['id']
 		.";".prepareText($_row['name'])
-		.";".prepareText(trim(prepareTags($_row['short_description'])))
-		.";".prepareText(trim(prepareTags($_row['description'])))
+		.";".$_row['short_description']
+		.";".$_row['description']
 		.";".convertStatus($_row['status'])
 		.";".date('d.m.Y H:i:s',$_row['created'])
 		.";".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')

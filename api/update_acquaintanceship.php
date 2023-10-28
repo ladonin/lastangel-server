@@ -22,15 +22,17 @@ $_stmt = $db_mysqli->prepare("UPDATE acquaintanceship
 SET 
 	description=?,
 	hide_album=?,
+	status=?,
 	updated=?
 WHERE id=1");
 $_now = time();
 $_hide_album = isset($_data['hide_album']) ? $_data['hide_album'] : 0;
+$_status = isset($_data['status']) ? $_data['status'] : 2;
 
-
-$_stmt->bind_param("sii", 
+$_stmt->bind_param("siii", 
 	$_data['description'], 
 	$_hide_album,
+	$_status,
 	$_now
  );
 
