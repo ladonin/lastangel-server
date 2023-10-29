@@ -20,6 +20,11 @@ function createSitemapCommonSection() {
 		<priority>0.9</priority>
 	</url>
 	<url>
+		<loc>http://lastangel.ru/o_priyte</loc>
+		<changefreq>weekly</changefreq>
+		<priority>0.8</priority>
+	</url>
+	<url>
 		<loc>http://lastangel.ru/pets</loc>
 		<changefreq>daily</changefreq>
 		<priority>0.7</priority>
