@@ -28,22 +28,27 @@ $_stmt = $db_mysqli->prepare("INSERT INTO news (
 	name,
 	short_description, 
 	description,
+	mobile_description,
 	ismajor,
 	hide_album,
+	use_mobile_description,
 	status,
 	created
-	) VALUES (?, ?, ?, ?, ?, ?, ?)");
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $_now = time();
 $_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
 $_hide_album = isset($_data['hide_album']) ? $_data['hide_album'] : 0;
+$_use_mobile_description = isset($_data['use_mobile_description']) ? $_data['use_mobile_description'] : 0;
 $_status = isset($_data['status']) ? $_data['status'] : 2;
 
 $_stmt->bind_param("sssiiii", 
 	$_data['name'],
 	$_data['short_description'], 
 	$_data['description'],
+	$_data['mobile_description'],
 	$_ismajor,
 	$_hide_album,
+	$_use_mobile_description,
 	$_status,
 	$_now
  );

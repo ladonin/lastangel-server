@@ -27,12 +27,16 @@ if ($_type === 'html') {
 }
 while($_row = $_result->fetch_array()){
 	if ($_type === 'txt') {
-		$_data.= $_row['description']."\n\n\n";
+		$_data.= $_row['description']."\n\n\n\n\n\n";
+		$_data.="Мобильная версия\n\n\n";
+		$_data.= $_row['mobile_description']."\n\n\n";
 		$_data.="#Дата последнего обновления: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."\n";
 		$_data.="\n";
     }
 	if ($_type === 'html') {
 		$_data.=$_row['description'];
+		$_data.="<br/><br/><br/><br/>Мобильная версия<br/><br/>";		
+		$_data.=$_row['mobile_description'];
 		$_data.="<br/><br/><b>Дата последнего обновления</b>: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-');
 
     }
