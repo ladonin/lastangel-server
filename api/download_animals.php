@@ -79,6 +79,8 @@ while($_row = $_result->fetch_array()){
 		$_data.="#Дата создания записи: ".date('d.m.Y H:i:s',$_row['created'])."\n";
 		$_data.="#Дата последнего обновления записи: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."\n";
 		$_data.="\n";
+		$_data.="----------------------------------------------------------";
+		$_data.="\n";
     }
 	if ($_type === 'html') {
 		$_data.="<b>id</b>: ".$_row['id']."<br/>";
@@ -95,6 +97,8 @@ while($_row = $_result->fetch_array()){
 		$_data.="<b>Опубликован</b>: ".convertIsPublished($_row['is_published'])."<br/>";
 		$_data.="<b>Дата создания записи</b>: ".date('d.m.Y H:i:s',$_row['created'])."<br/>";
 		$_data.="<b>Дата последнего обновления записи</b>: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."<br/>";
+		$_data.="<br/>";
+		$_data.="<hr/>";
 		$_data.="<br/>";
     }
 	if ($_type === 'csv') {

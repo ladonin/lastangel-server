@@ -35,7 +35,7 @@ while($_row = $_result->fetch_array()){
     }
 	if ($_type === 'html') {
 		$_data.=$_row['description'];
-		$_data.="<br/><br/><br/><br/>Мобильная версия<br/><br/>";		
+		$_data.="<br/><br/><br/><br/>Мобильная версия<br/><br/><hr/><br/>";		
 		$_data.=$_row['mobile_description'];
 		$_data.="<br/><br/><b>Дата последнего обновления</b>: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-');
 

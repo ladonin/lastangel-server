@@ -57,7 +57,9 @@ while($_row = $_result->fetch_array()){
 		$_data.="#Статус: ". convertStatus($_row['status'])."\n";
 		$_data.="#Дата создания: ".date('d.m.Y H:i:s',$_row['created'])."\n";
 		$_data.="#Дата последнего обновления: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."\n";
-		$_data.="\n\n\n\n";
+		$_data.="\n";
+		$_data.="----------------------------------------------------------";
+		$_data.="\n";
     }
 	if ($_type === 'html') {
 		$_data.="<b>id</b>: ".$_row['id']."<br/>";
@@ -68,7 +70,9 @@ while($_row = $_result->fetch_array()){
 		$_data.="<b>Статус</b>: ".convertStatus($_row['status'])."<br/>";
 		$_data.="<b>Дата создания</b>: ".date('d.m.Y H:i:s',$_row['created'])."<br/>";
 		$_data.="<b>Дата последнего обновления</b>: ".($_row['updated'] ? date('d.m.Y H:i:s',$_row['updated']) : '-')."<br/>";
-		$_data.="<br/><br/><br/>";
+		$_data.="<br/>";
+		$_data.="<hr/>";
+		$_data.="<br/>";
     }
 }
 
