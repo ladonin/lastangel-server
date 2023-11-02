@@ -5,7 +5,7 @@ function collectionsCommon_checkRequestTextData($data) {
 	  !isset($data['name']) || !$data['name'] ||
 	  !isset($data['short_description']) || !$data['short_description'] ||
 	  !isset($data['description']) || !$data['description'] ||
-	  !isset($data['type']) || !$data['type'] || ($data['type'] > 4) || ($data['type'] < 1) ||
+	  !isset($data['type']) || !$data['type'] || ($data['type'] > 5) || ($data['type'] < 1) ||
 	  !isset($data['status']) || !$data['status'] || ($data['status'] > 3) || ($data['status'] < 1) ||
 	  (($data['type'] < 3) && (!isset($data['animal_id']) || $data['animal_id'] < 1)) ||
 	  !isset($data['target_sum']) || !$data['target_sum']

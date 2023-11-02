@@ -47,9 +47,13 @@ $_donator_firstname = isset($_data['donator_firstname']) ? strtolower(trim($_dat
 $_donator_middlename = isset($_data['donator_middlename']) ? strtolower(trim($_data['donator_middlename'])) : "";
 $_donator_lastname = isset($_data['donator_lastname']) ? strtolower(trim($_data['donator_lastname'])) : "";
 $_donator_card = isset($_data['donator_card']) ? strtolower(trim($_data['donator_card'])) : "";
-$_sum = trim($_data['sum']);
+$_sum = trim(str_replace(
+    ",",
+    ".",
+    $_data['sum']
+));
 
-$_stmt->bind_param("ssssiisii", 
+$_stmt->bind_param("sssssisii", 
 	$_donator_firstname,
 	$_donator_middlename,
 	$_donator_lastname,

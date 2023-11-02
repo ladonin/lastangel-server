@@ -39,8 +39,12 @@ WHERE id=$_recordId");
 $_now = time();
 $_animal_id = isset($_data['animal_id']) ? $_data['animal_id'] : 0;
 $_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
-
-$_stmt->bind_param("siiissiii", 
+$_target_sum = trim(str_replace(
+    ",",
+    ".",
+    $_data['target_sum']
+));
+$_stmt->bind_param("siiissisi", 
 	$_data['name'],
 	$_data['type'],
 	$_data['status'],
@@ -48,7 +52,7 @@ $_stmt->bind_param("siiissiii",
 	$_data['short_description'], 
 	$_data['description'], 
 	$_ismajor,
-	$_data['target_sum'], 
+	$_target_sum, 
 	$_now
  );
 

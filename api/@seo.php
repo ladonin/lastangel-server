@@ -15,52 +15,52 @@ function createSitemapCommonSection() {
 	$_sitemapText = '<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
-		<loc>http://lastangel.ru</loc>
+		<loc>https://lastangel.ru</loc>
 		<changefreq>daily</changefreq>
 		<priority>0.9</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/o_priyte</loc>
+		<loc>https://lastangel.ru/o_priyte</loc>
 		<changefreq>weekly</changefreq>
 		<priority>0.8</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/pets</loc>
+		<loc>https://lastangel.ru/pets</loc>
 		<changefreq>daily</changefreq>
 		<priority>0.7</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/collections</loc>
+		<loc>https://lastangel.ru/collections</loc>
 		<changefreq>weekly</changefreq>
 		<priority>0.7</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/news</loc>
+		<loc>https://lastangel.ru/news</loc>
 		<changefreq>daily</changefreq>
 		<priority>0.8</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/stories</loc>
+		<loc>https://lastangel.ru/stories</loc>
 		<changefreq>daily</changefreq>
 		<priority>0.8</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/clinic</loc>
+		<loc>https://lastangel.ru/clinic</loc>
 		<changefreq>monthly</changefreq>
 		<priority>0.5</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/documents</loc>
+		<loc>https://lastangel.ru/documents</loc>
 		<changefreq>monthly</changefreq>
 		<priority>0.5</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/help</loc>
+		<loc>https://lastangel.ru/help</loc>
 		<changefreq>monthly</changefreq>
 		<priority>0.7</priority>
 	</url>
 	<url>
-		<loc>http://lastangel.ru/contacts</loc>
+		<loc>https://lastangel.ru/contacts</loc>
 		<changefreq>monthly</changefreq>
 		<priority>0.8</priority>
 	</url>
@@ -95,7 +95,7 @@ function createSitemapSection($section) {
 			while ($_row = $_res->fetch_assoc()) {
 				$_sitemapText .= 
 '	<url>
-		<loc>http://lastangel.ru/'.prepareSinglePageName($section).'/'.$_row['id'].'</loc>
+		<loc>https://lastangel.ru/'.prepareSinglePageName($section).'/'.$_row['id'].'</loc>
 		<changefreq>monthly</changefreq>
 		<priority>0.8</priority>
 	</url>
@@ -113,7 +113,7 @@ function createSitemapSection($section) {
 			while ($_row = $_res->fetch_assoc()) {
 				$_sitemapText .= 
 '	<url>
-		<loc>http://lastangel.ru/'.prepareSinglePageName($section).'/'.$_row['id'].'</loc>
+		<loc>https://lastangel.ru/'.prepareSinglePageName($section).'/'.$_row['id'].'</loc>
 		<changefreq>monthly</changefreq>
 		<priority>0.7</priority>
 	</url>
@@ -160,7 +160,7 @@ function createSitemap($section = false) {
 	
 $_sitemapText .= 
 '	<sitemap>
-		<loc>http://lastangel.ru/sitemap-common.xml</loc>
+		<loc>https://lastangel.ru/sitemap-common.xml</loc>
 	</sitemap>
 ';
 	
@@ -169,7 +169,7 @@ $_sitemapText .=
 	foreach ($_sections as $_section => $_time) {
 		$_sitemapText .= 
 '	<sitemap>
-		<loc>http://lastangel.ru/sitemap-'.$_section.'.xml</loc>
+		<loc>https://lastangel.ru/sitemap-'.$_section.'.xml</loc>
 	</sitemap>
 ';
 	}
