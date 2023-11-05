@@ -42,7 +42,7 @@ $_stmt = $db_mysqli->prepare("INSERT INTO donations (
 	created
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $_now = time();
-$_target_id = isset($_data['target_id']) ? $_data['target_id'] : 0;
+$_target_id = isset($_data['target_id']) ? intval($_data['target_id']) : 0;
 $_donator_firstname = isset($_data['donator_firstname']) ? strtolower(trim($_data['donator_firstname'])) : "";
 $_donator_middlename = isset($_data['donator_middlename']) ? strtolower(trim($_data['donator_middlename'])) : "";
 $_donator_lastname = isset($_data['donator_lastname']) ? strtolower(trim($_data['donator_lastname'])) : "";
@@ -79,6 +79,17 @@ if (!$_recordId) {
 
 ///////////////////// <-- ОСНОВНЫЕ ДАННЫЕ
 
+if ($_data['type'] === 2 && $_target_id) {
+	// Если донат на сбор, то, возможно, его надо закрыть
+	$_res = $db_mysqli->query("SELECT *, 
+		(SELECT SUM(sum) as sum FROM `donations` WHERE type=2 AND target_id = $_target_id) as collected
+		FROM collections WHERE id=$_target_id");
+		
+	$_row = $_res->fetch_assoc();
+	if (floatval($_row['collected']) >= floatval($_row['target_sum'] && $_row['status'] !== 3)) {
+		$_res = $db_mysqli->query("UPDATE collections SET status=3 WHERE id=$_target_id");
+	}
+}
 
 functions_successOutput($_recordId);
 ?>
