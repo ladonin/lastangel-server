@@ -42,13 +42,13 @@ $_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
 $_hide_album = isset($_data['hide_album']) ? $_data['hide_album'] : 0;
 $_use_mobile_description = isset($_data['use_mobile_description']) ? $_data['use_mobile_description'] : 0;
 $_status = isset($_data['status']) ? $_data['status'] : 1;
-
+$_mobile_description = isset($_data['mobile_description']) ? $_data['mobile_description'] : '';
 
 $_stmt->bind_param("ssssiiiii", 
 	$_data['name'],
 	$_data['short_description'], 
 	$_data['description'], 
-	$_data['mobile_description'], 
+	$_mobile_description, 
 	$_ismajor,
 	$_hide_album,
 	$_use_mobile_description,
