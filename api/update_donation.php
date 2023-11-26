@@ -3,6 +3,7 @@ require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
 require('@donations_common.php');
+require('@collections_common.php');
 auth_verify([$ADMIN_ROLE]);
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
 $_json = file_get_contents('php://input');
@@ -28,6 +29,14 @@ if ($_data['type'] === 1 || $_data['type'] === 2) {
 	$_row = $_res->fetch_assoc();
 	$_target_print_name = $_row['name'];
 }
+
+
+// --> Проверяем - на что был донат изначально - для возможного автозакрывания/открывания сбора (если на сбор)***
+$_res = $db_mysqli->query("SELECT * FROM donations WHERE id=$_recordId");
+$_row = $_res->fetch_assoc();
+$_oldDonationData = $_row;
+// <--
+
 
 $_stmt = $db_mysqli->prepare("UPDATE donations
 SET 
@@ -70,6 +79,36 @@ $_stmt->bind_param("sssssisii",
 $_stmt->execute();
 
 ///////////////////// <-- ОСНОВНЫЕ ДАННЫЕ
+
+// -- > Возможное закрытие/открытие сбора
+
+
+// --> Проверяем - чем донат стал фактически - для возможного автозакрывания/открывания сбора (если на сбор)***
+$_res = $db_mysqli->query("SELECT * FROM donations WHERE id=$_recordId");
+$_row = $_res->fetch_assoc();
+$_newDonationData = $_row;
+// <--
+
+
+// ***--> Возможное автозакрывание/открывание сбора
+if ($_oldDonationData['type'] === '2' && $_newDonationData['type'] === '2' && $_oldDonationData['target_id'] === $_newDonationData['target_id']) {
+	// Если не меняли таргет и он направлен на один и тот же сбор, то обновляем только этот таргет
+	// Логика ниже делает тоже самое, но сделает это дважды
+	collectionsCommon_updateCollectionStatus($_newDonationData['target_id']);
+} else {
+	// В этом случае проверяем старый и новый таргет, в случае, если они относятся к сборам
+	if ($_oldDonationData['type'] === '2') {
+		collectionsCommon_updateCollectionStatus($_oldDonationData['target_id']);
+	}
+	if ($_newDonationData['type'] === '2') {
+		collectionsCommon_updateCollectionStatus($_newDonationData['target_id']);
+	}
+	
+}
+// <--
+
+//
+// <-- Возможное закрытие/открытие сбора
 
 functions_successOutput($_recordId);
 ?>

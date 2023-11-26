@@ -86,7 +86,7 @@ if ($_data['type'] === 2 && $_target_id) {
 		FROM collections WHERE id=$_target_id");
 		
 	$_row = $_res->fetch_assoc();
-	if (floatval($_row['collected']) >= floatval($_row['target_sum'] && $_row['status'] !== 3)) {
+	if (floatval($_row['collected']) >= floatval($_row['target_sum']) && $_row['status'] !== 3) {
 		$_res = $db_mysqli->query("UPDATE collections SET status=3 WHERE id=$_target_id");
 	}
 }

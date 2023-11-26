@@ -262,5 +262,15 @@ $_another_photosJSON= json_encode($_anotherImagesDb);
 $db_mysqli->query("UPDATE collections SET another_images = '". $_another_photosJSON ."', main_image='".(count($_mainImagesDb) ? 1 : 0)."' WHERE id = '".$_recordId."'");
 ///////////////////// <-- ФОТО В БД
 
+
+
+
+// -- > Возможное закрытие/открытие сбора
+collectionsCommon_updateCollectionStatus($_recordId);
+// <-- Возможное закрытие/открытие сбора
+
+
+
+
 functions_successOutput($_recordId);
 ?>

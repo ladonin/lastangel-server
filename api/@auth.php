@@ -29,8 +29,7 @@ function auth_verify($roles) {
 	global $AUTH_SECRET_KEY;	
 	$_headers = apache_request_headers();
 
-	$_token = $_headers['authorization'];
-
+	$_token = isset($_headers['authorization']) ? $_headers['authorization'] : $_headers['Authorization'];
 	try {
 		$_decoded = JWT::decode($_token, new Key($AUTH_SECRET_KEY, 'HS256'));
 	} catch (Exception $e) {
@@ -45,10 +44,10 @@ function auth_verify($roles) {
  * Определение роли
  */
 function auth_get_role() {
-	global $AUTH_SECRET_KEY;	
+	global $AUTH_SECRET_KEY;
 	$_headers = apache_request_headers();
-	if (!isset($_headers['authorization'])) return '';
-	$_token = $_headers['authorization'];
+	if (!isset($_headers['authorization']) && !isset($_headers['Authorization'])) return '';
+	$_token = isset($_headers['authorization']) ? $_headers['authorization'] : $_headers['Authorization'];
 
 	try {
 		$_decoded = JWT::decode($_token, new Key($AUTH_SECRET_KEY, 'HS256'));
