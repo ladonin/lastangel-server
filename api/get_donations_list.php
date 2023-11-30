@@ -14,6 +14,12 @@ if (isset($_GET['limit']) && $_GET['limit']) {
 	// При установленном лимите нет ограничения по времени
 	$_limitTimeCondition = 0;
 }
+
+// На сборы нет лимита по времени
+if (isset($_GET['type']) && $_GET['type'] === '2') {
+	$_limitTimeCondition = 0;
+}
+
 $_sql = "
 SELECT donations.*, 
 	donators.fullname as donator_fullname, 

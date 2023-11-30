@@ -21,7 +21,7 @@ function collectionsCommon_updateCollectionStatus($id) {
 		(SELECT SUM(sum) as sum FROM `donations` WHERE type=2 AND target_id = $id) as collected
 		FROM collections WHERE id=$id");
 	$_row = $_res->fetch_assoc();
-var_dump($_row);
+
 	$_status = false;
 	// Если сбор открыт/закрыт
 	if ($_row['status'] === '1' && ($_row['target_sum'] === '0' || (floatval($_row['target_sum']) <= floatval($_row['collected'])))) {
@@ -29,7 +29,7 @@ var_dump($_row);
 	} else if ($_row['status'] === '3' && (floatval($_row['collected']) > 0) && (floatval($_row['target_sum']) > floatval($_row['collected']))) {
 		$_status = '1';
 	}
-	var_dump($_status);
+
 	if ($_status) {
 		$db_mysqli->query("UPDATE collections SET status = $_status WHERE id=$id");
 	}

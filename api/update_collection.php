@@ -23,7 +23,6 @@ if (!$_recordId) {
 	functions_errorOutput('Некорректный запрос. id:' . $_recordId, 400);
 }
 
-
 $_stmt = $db_mysqli->prepare("UPDATE collections
 SET 
 	name=?,
@@ -33,7 +32,9 @@ SET
 	short_description=?,
 	description=?,
 	ismajor=?,
-	target_sum=?, 
+	target_sum=?,
+	spent=(spent + ?),
+	last_spending=?,
 	updated=?
 WHERE id=$_recordId");
 $_now = time();
@@ -44,7 +45,8 @@ $_target_sum = trim(str_replace(
     ".",
     $_data['target_sum']
 ));
-$_stmt->bind_param("siiissisi", 
+$_current_spending = isset($_data['current_spending']) ? strval(floatval($_data['current_spending'])) : '0';
+$_stmt->bind_param("siiississsi", 
 	$_data['name'],
 	$_data['type'],
 	$_data['status'],
@@ -52,7 +54,9 @@ $_stmt->bind_param("siiissisi",
 	$_data['short_description'], 
 	$_data['description'], 
 	$_ismajor,
-	$_target_sum, 
+	$_target_sum,
+	$_current_spending,
+	$_current_spending,
 	$_now
  );
 
