@@ -3,12 +3,12 @@ require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
 require('@videos_processor.php');
-require('@animals_common.php');
+require('@volunteers_common.php');
 require('@seo.php');
 
 auth_verify([$ADMIN_ROLE]);
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
-createSitemap('pets');
+createSitemap('volunteers');
 $_json = $_POST['data'];
 
 $_data = array();
@@ -17,45 +17,39 @@ if ($_json) {
   $_data = get_object_vars(json_decode($_json));
 }
 
-animalsCommon_checkRequestTextData($_data);
+volunteersCommon_checkRequestTextData($_data);
 
 
-$_stmt = $db_mysqli->prepare("INSERT INTO animals(
-	name,
-	breed,
-	birthdate, 
-	short_description, 
-	description, 
-	sex,
-	grafted,
-	sterilized,
-	kind,
-	status,
+$_stmt = $db_mysqli->prepare("INSERT INTO volunteers(
+	fio,
+	birthdate,
+	short_description,
+	description,
 	is_published,
-	ismajor,
+	vk_link,
+	ok_link,
+	inst_link,
+	phone,
 	created
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $_now = time();
 
 
 //$_birthdate = isset($_data['birthdate']) ? $_data['birthdate'] : 0;
 $_is_published = isset($_data['is_published']) ? $_data['is_published'] : 0;
-$_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
-$_breed = isset($_data['breed']) ? $_data['breed'] : "";
 
-$_stmt->bind_param("ssissiiiiiiii", 
-	$_data['name'],  
-	$_breed,
+
+
+$_stmt->bind_param("sississssi", 
+	$_data['fio'],  
 	$_data['birthdate'],
 	$_data['short_description'], 
 	$_data['description'], 
-	$_data['sex'],
-	$_data['grafted'],
-	$_data['sterilized'],
-	$_data['kind'],
-	$_data['status'],
 	$_is_published,
-	$_ismajor,
+	$_data['vk_link'],
+	$_data['ok_link'],
+	$_data['inst_link'],
+	$_data['phone'],
 	$_now
  );
 
@@ -81,7 +75,7 @@ if (!$_recordId) {
 
 ///////////////////// --> ВИДЕО
 // Приходит  файл - добавляем
-$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'pets/'.$_recordId.'/';
+$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'volunteers/'.$_recordId.'/';
 if (!is_dir($_videoTempFolder) && !mkdir($_videoTempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_videoTempFolder, 500);
 }
@@ -97,7 +91,7 @@ function processVideo($name) {
 		videos_checkSize($video, $_videoTempFolder);
 		
 		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM animals WHERE id='$_recordId'");
+		$_res = $db_mysqli->query("SELECT $name FROM volunteers WHERE id='$_recordId'");
 		$_row = $_res->fetch_assoc();
 		$_oldVideo = $_row[$name];
 
@@ -107,8 +101,8 @@ function processVideo($name) {
 		// Грузим исходник в temp
 		if(move_uploaded_file($_FILES[$name]['tmp_name'], $_pathVideo)) {
 			// Загружаем на внешнее хранилище
-			outerStorage_uploadFile($_pathVideo, 'pets/'.$_recordId);
-			$db_mysqli->query("UPDATE animals SET $name = '$_videoFileName' WHERE id = '$_recordId'");
+			outerStorage_uploadFile($_pathVideo, 'volunteers/'.$_recordId);
+			$db_mysqli->query("UPDATE volunteers SET $name = '$_videoFileName' WHERE id = '$_recordId'");
 		} else {
 			functions_totalRemoveFileOrDir($_videoTempFolder);
 			functions_errorOutput('ошибка загрузки видео: ' . $_FILES[$name]['name'] . ' в ' . $_pathVideo, 500);
@@ -133,7 +127,7 @@ processVideo('video3');
 
 
 ///////////////////// --> ФОТО ФАЙЛЫ
-$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'pets/'.$_recordId.'/';
+$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'volunteers/'.$_recordId.'/';
 if (!is_dir($_tempFolder) && !mkdir($_tempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_tempFolder, 500);
 }
@@ -199,11 +193,11 @@ if (isset($_FILES['another_images'])) {
 
 // --> Загружаем на внешнее хранилище
 	foreach ($_mainImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'pets/'.$_recordId);
+		outerStorage_uploadFile($_tempFolder.$_path, 'volunteers/'.$_recordId);
 	}
 
 	foreach ($_anotherImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'pets/'.$_recordId);
+		outerStorage_uploadFile($_tempFolder.$_path, 'volunteers/'.$_recordId);
 	}
 // <-- Загружаем на внешнее хранилище
 
@@ -223,7 +217,7 @@ functions_totalRemoveFileOrDir($_tempFolder);
 
 $_another_photosJSON= json_encode($_anotherImagesDb);
 
-$db_mysqli->query("UPDATE animals SET another_images = '". $_another_photosJSON ."', main_image='".(count($_mainImagesDb) ? 1 : 0)."' WHERE id = '".$_recordId."'");
+$db_mysqli->query("UPDATE volunteers SET another_images = '". $_another_photosJSON ."', main_image='".(count($_mainImagesDb) ? 1 : 0)."' WHERE id = '".$_recordId."'");
 
 ///////////////////// <-- ФОТО В БД
 

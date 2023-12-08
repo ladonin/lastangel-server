@@ -8,52 +8,53 @@ require('@imports.php');
 //if ($json) {
 //  $data = get_object_vars(json_decode($json));
 //}
-$_sql = "SELECT * FROM stories WHERE 1 ";
+
+$_sql = "SELECT * from volunteers WHERE 1 ";
 
 $_params = array();
 $_params_types = "";
 
+if (isset($_GET['id']) && $_GET['id']) {
+	$_sql.="AND id = ? ";
+	$_params[] = $_GET['id'];
+	$_params_types.='i';
+}
 
-if (isset($_GET['title']) && $_GET['title']) {
-	$_sql.="AND name LIKE ? ";
-	$_params[] = '%'.$_GET['title'].'%';
+if (isset($_GET['fio']) && $_GET['fio']) {
+	$_sql.="AND fio = ? ";
+	$_params[] = $_GET['fio'];
 	$_params_types.='s';
 }
 
-if (isset($_GET['excludeId']) && $_GET['excludeId']) {
-	$_sql.="AND id != ? ";
-	$_params[] = $_GET['excludeId'];
-	$_params_types.='i';
+if (isset($_GET['notPublished']) && $_GET['notPublished'] === '1') {
+	$_sql.="AND is_published = 0 ";
+} else if (!isset($_GET['withUnpublished']) || $_GET['withUnpublished'] === '0') {
+	$_sql.="AND is_published = 1 ";
 }
-if (isset($_GET['ismajor']) && $_GET['ismajor']) {
-	$_sql.="AND ismajor = ? ";
-	$_params[] = 1;
-	$_params_types.='i';
-}
-if (isset($_GET['excludeStatus'])) {
-	$_sql.="AND status != ? ";
-	$_params[] = $_GET['excludeStatus'];
-	$_params_types.='i';
-}
-
 
 
 if (isset($_GET['orderComplex']) && $_GET['orderComplex']) {
 	$_orderComplex = $_GET['orderComplex'];
-	if ($_orderComplex === 'ismajor desc, id desc') {
-		$_sql.="ORDER BY " . $_orderComplex . " ";
-	} else if ($_orderComplex === 'id desc') {
-		$_sql.="ORDER BY " . $_orderComplex . " ";
-	} else if ($_orderComplex === 'id asc') {
+	if (
+		$_orderComplex === 'id desc' || 
+		$_orderComplex === 'id asc'
+	) {
 		$_sql.="ORDER BY " . $_orderComplex . " ";
 	}
-} else {
-	$_order = (isset($_GET['order']) && strtolower($_GET['order']) === 'asc') ? 'ASC' : 'DESC';
-	$_sql.="ORDER by id " . $_order . " ";
+} else if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
+
+	$_order = $_GET['order'];
+	$_type = $_GET['order_type'];
+	if (($_order === 'id'
+	 || $_order === 'birthdate'
+	 || $_order === 'fio'
+	 || $_order === 'created'
+	 || $_order === 'updated')
+		&& (strtolower($_type) === 'asc' 
+		|| strtolower($_type) === 'desc'))	 {
+	$_sql.="ORDER BY " . $_order . " " . $_type . " ";
+	}
 }
-
-
-
 
 $_limit = (isset($_GET['limit']) && $_GET['limit']) ? intval(trim($_GET['limit'])) : 20;
 $_limit = $_limit ? $_limit : 20;

@@ -3,7 +3,7 @@ require('@imports.php');
 require('@outer_storage.php');
 require('@images_processor.php');
 require('@videos_processor.php');
-require('@animals_common.php');
+require('@volunteers_common.php');
 auth_verify([$ADMIN_ROLE]);
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
 
@@ -15,7 +15,7 @@ if ($_json) {
   $_data = get_object_vars(json_decode($_json));
 }
 
-animalsCommon_checkRequestTextData($_data);
+volunteersCommon_checkRequestTextData($_data);
 
 $_recordId = intval($_GET['id']);
 
@@ -24,43 +24,34 @@ if (!$_recordId) {
 }
 
 
-$_stmt = $db_mysqli->prepare("UPDATE animals
+$_stmt = $db_mysqli->prepare("UPDATE volunteers
 SET 
-name=?,
-breed=?,
-birthdate=?,
-short_description=?,
-description=?,
-sex=?,
-grafted=?,
-sterilized=?,
-kind=?,
-status=?,
-is_published=?,
-ismajor=?,
-updated=?
-
+	fio=?,
+	birthdate=?,
+	short_description=?,
+	description=?,
+	is_published=?,
+	vk_link=?,
+	ok_link=?,
+	inst_link=?,
+	phone=?,
+	updated=?
 WHERE id=$_recordId");
 $_now = time();
 //$_birthdate = isset($_data['birthdate']) ? $_data['birthdate'] : 0;
-$_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
 $_is_published = isset($_data['is_published']) ? $_data['is_published'] : 0;
-$_breed = isset($_data['breed']) ? $_data['breed'] : "";
 
 
-$_stmt->bind_param("ssissiiiiiiii", 
-	$_data['name'], 
-	$_breed,  
+$_stmt->bind_param("sississssi", 
+	$_data['fio'],   
 	$_data['birthdate'], 
 	$_data['short_description'], 
 	$_data['description'], 
-	$_data['sex'],
-	$_data['grafted'],
-	$_data['sterilized'],
-	$_data['kind'],
-	$_data['status'],
 	$_is_published,
-	$_ismajor,
+	$_data['vk_link'],
+	$_data['ok_link'],
+	$_data['inst_link'],
+	$_data['phone'],
 	$_now
  );
 
@@ -71,18 +62,9 @@ $_stmt->execute();
 ///////////////////// <-- ОСНОВНЫЕ ДАННЫЕ
 
 
-// --> Обновляем снимок названия для возможных донатов на данного питомца 
-// Если его удалят, то показывать последнюю актуальную кличку 
-$_stmt = $db_mysqli->prepare("UPDATE donations
-SET target_print_name=? WHERE type=1 AND target_id=$_recordId");
-$_stmt->bind_param("s", $_data['name']);
-$_stmt->execute();
-// <-- Обновляем снимок названия для возможных донатов на данного питомца
-
-
 ///////////////////// --> ВИДЕО
 // Приходит либо текст - не трогаем, либо файл - заменяем (даже, если названия совпадают), либо пусто - удаляем
-$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'pets/'.$_recordId.'/';
+$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'volunteers/'.$_recordId.'/';
 if (!is_dir($_videoTempFolder) && !mkdir($_videoTempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_videoTempFolder, 500);
 }
@@ -98,7 +80,7 @@ function processVideo($name) {
 		videos_checkSize($video, $_videoTempFolder);
 		
 		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM animals WHERE id='$_recordId'");
+		$_res = $db_mysqli->query("SELECT $name FROM volunteers WHERE id='$_recordId'");
 		$_row = $_res->fetch_assoc();
 		$_oldVideo = $_row[$name];
 
@@ -108,9 +90,9 @@ function processVideo($name) {
 		// Грузим исходник в temp
 		if(move_uploaded_file($_FILES[$name]['tmp_name'], $_pathVideo)) {
 			// Загружаем на внешнее хранилище
-			$_oldVideo && outerStorage_removeFile($_oldVideo, 'pets/'.$_recordId);
-			outerStorage_uploadFile($_pathVideo, 'pets/'.$_recordId);
-			$db_mysqli->query("UPDATE animals SET $name = '$_videoFileName' WHERE id = '$_recordId'");
+			$_oldVideo && outerStorage_removeFile($_oldVideo, 'volunteers/'.$_recordId);
+			outerStorage_uploadFile($_pathVideo, 'volunteers/'.$_recordId);
+			$db_mysqli->query("UPDATE volunteers SET $name = '$_videoFileName' WHERE id = '$_recordId'");
 		} else {
 			functions_totalRemoveFileOrDir($_videoTempFolder);
 			functions_errorOutput('ошибка загрузки видео: ' . $_FILES[$name]['name'] . ' в ' . $_pathVideo, 500);
@@ -118,13 +100,13 @@ function processVideo($name) {
 	} else if (isset($_POST[$name]) && $_POST[$name] === '') {
 		// Возможно, надо удалить видео из хранилища и базы, т.к. пришел пустой результат в ответе от клиента
 		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM animals WHERE id='$_recordId'");
+		$_res = $db_mysqli->query("SELECT $name FROM volunteers WHERE id='$_recordId'");
 		$_row = $_res->fetch_assoc();
 		$_oldVideo = $_row[$name];
 		if ($_oldVideo) {
 			// Да, видео есть и, следовательно, его надо удалить
-			outerStorage_removeFile($_oldVideo, 'pets/'.$_recordId);
-			$db_mysqli->query("UPDATE animals SET $name = '' WHERE id = '$_recordId'");
+			outerStorage_removeFile($_oldVideo, 'volunteers/'.$_recordId);
+			$db_mysqli->query("UPDATE volunteers SET $name = '' WHERE id = '$_recordId'");
 		}
 	}
 	// Если придет $_POST[$name] с текстом, то, значит, старое видео не тронуто
@@ -142,7 +124,7 @@ processVideo('video3');
 
 
 ///////////////////// --> ФОТО ФАЙЛЫ
-$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'pets/'.$_recordId.'/';
+$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'volunteers/'.$_recordId.'/';
 if (!is_dir($_tempFolder) && !mkdir($_tempFolder, 0700, true)) {
 	functions_errorOutput('Не удалось создать директорию:' . $_tempFolder, 500);
 }
@@ -150,7 +132,7 @@ if (!is_dir($_tempFolder) && !mkdir($_tempFolder, 0700, true)) {
 
 
 // Выбираем значение photos до перезаписи
-$_res = $db_mysqli->query("SELECT main_image, another_images FROM animals WHERE id=$_recordId");
+$_res = $db_mysqli->query("SELECT main_image, another_images FROM volunteers WHERE id=$_recordId");
 $_row = $_res->fetch_assoc();
 
 
@@ -203,7 +185,7 @@ if (isset($_data['another_images_for_delete'])) {
 		$_filesSizeNames = images_getFileSizeNames('another', $_number, $IMAGES_ANOTHER_SIZES);
 		
 		foreach ($_filesSizeNames as $_fileName) {
-			outerStorage_removeFile($_fileName, 'pets/'.$_recordId);
+			outerStorage_removeFile($_fileName, 'volunteers/'.$_recordId);
 		}
 	}
 
@@ -249,11 +231,11 @@ if (isset($_FILES['another_images'])) {
 
 // --> Загружаем на внешнее хранилище
 	foreach ($_mainImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'pets/'.$_recordId);
+		outerStorage_uploadFile($_tempFolder.$_path, 'volunteers/'.$_recordId);
 	}
 
 	foreach ($_anotherImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'pets/'.$_recordId);
+		outerStorage_uploadFile($_tempFolder.$_path, 'volunteers/'.$_recordId);
 	}
 // <-- Загружаем на внешнее хранилище
 
@@ -272,7 +254,7 @@ functions_totalRemoveFileOrDir($_tempFolder);
 
 $_another_photosJSON= json_encode($_anotherImagesDb);
 
-$db_mysqli->query("UPDATE animals SET another_images = '". $_another_photosJSON ."', main_image='".(count($_mainImagesDb) ? 1 : 0)."' WHERE id = '".$_recordId."'");
+$db_mysqli->query("UPDATE volunteers SET another_images = '". $_another_photosJSON ."', main_image='".(count($_mainImagesDb) ? 1 : 0)."' WHERE id = '".$_recordId."'");
 ///////////////////// <-- ФОТО В БД
 
 functions_successOutput($_recordId);

@@ -44,6 +44,11 @@ function createSitemapCommonSection() {
 		<changefreq>daily</changefreq>
 		<priority>0.8</priority>
 	</url>
+		<url>
+		<loc>https://lastangel.ru/volunteers</loc>
+		<changefreq>daily</changefreq>
+		<priority>0.8</priority>
+	</url>
 	<url>
 		<loc>https://lastangel.ru/clinic</loc>
 		<changefreq>monthly</changefreq>
@@ -78,6 +83,7 @@ function prepareSinglePageName($section) {
 	if ($section === 'collections') return 'collection';
 	if ($section === 'news') return 'news';
 	if ($section === 'stories') return 'story';
+	if ($section === 'volunteers') return 'volunteer';
 	
 	
 }
@@ -200,6 +206,7 @@ $_sitemapText .=
 		createSitemapSection('collections');
 		createSitemapSection('news');
 		createSitemapSection('stories');
+		createSitemapSection('volunteers');
 	}
 	
 	

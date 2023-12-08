@@ -42,9 +42,11 @@ if (isset($_GET['excludeStatus'])) {
 
 if (isset($_GET['orderComplex']) && $_GET['orderComplex']) {
 	$_orderComplex = $_GET['orderComplex'];
-	if (
-		$_orderComplex === 'ismajor desc, id desc'
-	) {
+	if ($_orderComplex === 'ismajor desc, id desc') {
+		$_sql.="ORDER BY " . $_orderComplex . " ";
+	} else if ($_orderComplex === 'id desc') {
+		$_sql.="ORDER BY " . $_orderComplex . " ";
+	} else if ($_orderComplex === 'id asc') {
 		$_sql.="ORDER BY " . $_orderComplex . " ";
 	}
 } else {
