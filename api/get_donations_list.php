@@ -1,14 +1,6 @@
 <?php
 require('@imports.php');
 
-//$json = file_get_contents('php://input');
-
-//$data = array();
-
-//if ($json) {
-//  $data = get_object_vars(json_decode($json));
-//}
-
 $_limitTimeCondition = time() - 3600*24*30;
 if (isset($_GET['limit']) && $_GET['limit']) {
 	// При установленном лимите нет ограничения по времени
@@ -21,29 +13,30 @@ if (isset($_GET['type']) && $_GET['type'] === '2') {
 }
 
 $_sql = "
-SELECT donations.*, 
-	donators.fullname as donator_fullname, 
-	donators.id as donator_id,
-	donators.link_to_page as donator_outer_link,
-CASE 
-	WHEN donations.type = '1' THEN animals.name
-	WHEN donations.type = '2' THEN collections.name
-	ELSE '' 
-	END as target_name
-FROM (SELECT * FROM donations WHERE created > $_limitTimeCondition) donations
-	LEFT JOIN animals ON donations.target_id = animals.id 
-	LEFT JOIN collections ON donations.target_id = collections.id 
-	LEFT JOIN donators ON 
-		LOWER(donators.firstname) = LOWER(donations.donator_firstname) 
-		AND LOWER(donators.middlename) = LOWER(donations.donator_middlename) 
-		AND LOWER(donators.lastname) = LOWER(donations.donator_lastname) 
-		AND LOWER(donators.card) = LOWER(donations.donator_card)
-WHERE donations.created > $_limitTimeCondition  ";
+	SELECT
+		donations.*,
+		donators.fullname as donator_fullname,
+		donators.id as donator_id,
+		donators.link_to_page as donator_outer_link,
+		CASE
+			WHEN donations.type = '1' THEN animals.name
+			WHEN donations.type = '2' THEN collections.name
+			ELSE ''
+			END as target_name
+		FROM (SELECT * FROM donations WHERE created > $_limitTimeCondition) donations
+		LEFT JOIN animals ON donations.target_id = animals.id
+		LEFT JOIN collections ON donations.target_id = collections.id
+		LEFT JOIN donators ON
+			LOWER(donators.firstname) = LOWER(donations.donator_firstname)
+			AND LOWER(donators.middlename) = LOWER(donations.donator_middlename)
+			AND LOWER(donators.lastname) = LOWER(donations.donator_lastname)
+			AND LOWER(donators.card) = LOWER(donations.donator_card)
+		WHERE donations.created > $_limitTimeCondition  ";
 
 $_params = array();
 $_params_types = "";
-
 $_isAnonym = false;
+
 if (isset($_GET['fio']) && $_GET['fio']) {
 	$_fio = strtolower(trim(preg_replace('/[ ]+/', ' ', $_GET['fio'])));
 	if ($_fio === 'аноним') {
@@ -113,7 +106,6 @@ if (isset($_GET['type'])) {
 	$_params[] = $_GET['type'];
 	$_params_types.='i';
 }
-
 
 if (isset($_GET['order']) && isset($_GET['order_type']) && $_GET['order'] && $_GET['order_type']) {
 

@@ -1,10 +1,11 @@
 <?php
-require('@imports.php');
-if (!isset($_GET['id']) || !intval($_GET['id'])) {
-	functions_errorOutput('Некорректный запрос. Не передан id.', 400);
+require "@imports.php";
+
+if (!isset($_GET["id"]) || !intval($_GET["id"])) {
+    functions_errorOutput("Некорректный запрос. Не передан id.", 400);
 }
 
-$_recordId = intval($_GET['id']);
+$_recordId = intval($_GET["id"]);
 
 $_stmt = $db_mysqli->prepare("SELECT * FROM donators WHERE id=$_recordId");
 $_stmt->execute();

@@ -1,5 +1,5 @@
 <?php
-require('@imports.php');
+require "@imports.php";
 
 $_stmt = $db_mysqli->prepare("SELECT * FROM documents WHERE id=1");
 

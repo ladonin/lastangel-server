@@ -1,280 +1,339 @@
 <?php
-require('@imports.php');
-require('@outer_storage.php');
-require('@images_processor.php');
-require('@videos_processor.php');
-require('@collections_common.php');
+require "@imports.php";
+require "@outer_storage.php";
+require "@images_processor.php";
+require "@videos_processor.php";
+require "@collections_common.php";
+
 auth_verify([$ADMIN_ROLE]);
+
 ///////////////////// --> ОСНОВНЫЕ ДАННЫЕ
-
-$_json = $_POST['data'];
-
-$_data = array();
-
+$_json = $_POST["data"];
+$_data = [];
 if ($_json) {
-  $_data = get_object_vars(json_decode($_json));
+    $_data = get_object_vars(json_decode($_json));
 }
 
 collectionsCommon_checkRequestTextData($_data);
 
-$_recordId = intval($_GET['id']);
+$_recordId = intval($_GET["id"]);
 
 if (!$_recordId) {
-	functions_errorOutput('Некорректный запрос. id:' . $_recordId, 400);
+    functions_errorOutput("Некорректный запрос. id:" . $_recordId, 400);
 }
 
-$_stmt = $db_mysqli->prepare("UPDATE collections
-SET 
-	name=?,
-	type=?,
-	status=?,
-	animal_id=?,
-	short_description=?,
-	description=?,
-	ismajor=?,
-	target_sum=?,
-	spent=(spent + ?),
-	last_spending=?,
-	updated=?
-WHERE id=$_recordId");
+$_stmt = $db_mysqli->prepare("
+	UPDATE collections
+	SET
+		name=?,
+		type=?,
+		status=?,
+		animal_id=?,
+		short_description=?,
+		description=?,
+		ismajor=?,
+		target_sum=?,
+		spent=(spent + ?),
+		last_spending=?,
+		updated=?
+	WHERE id=$_recordId");
 $_now = time();
-$_animal_id = isset($_data['animal_id']) ? $_data['animal_id'] : 0;
-$_ismajor = isset($_data['ismajor']) ? $_data['ismajor'] : 0;
-$_target_sum = trim(str_replace(
-    ",",
-    ".",
-    $_data['target_sum']
-));
-$_current_spending = isset($_data['current_spending']) ? strval(floatval($_data['current_spending'])) : '0';
-$_stmt->bind_param("siiississsi", 
-	$_data['name'],
-	$_data['type'],
-	$_data['status'],
-	$_animal_id,
-	$_data['short_description'], 
-	$_data['description'], 
-	$_ismajor,
-	$_target_sum,
-	$_current_spending,
-	$_current_spending,
-	$_now
- );
+$_animal_id = isset($_data["animal_id"]) ? $_data["animal_id"] : 0;
+$_ismajor = isset($_data["ismajor"]) ? $_data["ismajor"] : 0;
+$_target_sum = trim(str_replace(",", ".", $_data["target_sum"]));
+$_current_spending = isset($_data["current_spending"])
+    ? strval(floatval($_data["current_spending"]))
+    : "0";
+$_stmt->bind_param(
+    "siiississsi",
+    $_data["name"],
+    $_data["type"],
+    $_data["status"],
+    $_animal_id,
+    $_data["short_description"],
+    $_data["description"],
+    $_ismajor,
+    $_target_sum,
+    $_current_spending,
+    $_current_spending,
+    $_now
+);
 
 $_stmt->execute();
-
 ///////////////////// <-- ОСНОВНЫЕ ДАННЫЕ
 
-
-
-// --> Обновляем снимок названия для возможных донатов на данный сбор 
-// Если его удалят, то показывать последнее актуальное название 
+// --> Обновляем снимок названия для возможных донатов на данный сбор
+// Если его удалят, то показывать последнее актуальное название
 $_stmt = $db_mysqli->prepare("UPDATE donations
 SET target_print_name=? WHERE type=2 AND target_id=$_recordId");
-$_stmt->bind_param("s", $_data['name']);
+$_stmt->bind_param("s", $_data["name"]);
 $_stmt->execute();
-// <-- Обновляем снимок названия для возможных донатов на данный сбор 
-
-
+// <-- Обновляем снимок названия для возможных донатов на данный сбор
 
 ///////////////////// --> ВИДЕО
 // Приходит либо текст - не трогаем, либо файл - заменяем (даже, если названия совпадают), либо пусто - удаляем
-$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH.'collections/'.$_recordId.'/';
+$_videoTempFolder = $VIDEOS_TEMPFOLDER_PATH . "collections/" . $_recordId . "/";
 if (!is_dir($_videoTempFolder) && !mkdir($_videoTempFolder, 0700, true)) {
-	functions_errorOutput('Не удалось создать директорию:' . $_videoTempFolder, 500);
+    functions_errorOutput(
+        "Не удалось создать директорию:" . $_videoTempFolder,
+        500
+    );
 }
 
-function processVideo($name) {
-	global $db_mysqli;
-	global $_recordId;
-	global $_videoTempFolder;
-	if (isset($_FILES[$name]) && $_FILES[$name]) {
-		// Если пришел файл, то надо добавить/поменять
-		$video = $_FILES[$name];
-		videos_checkExtension($video, $_videoTempFolder);
-		videos_checkSize($video, $_videoTempFolder);
-		
-		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM collections WHERE id='$_recordId'");
-		$_row = $_res->fetch_assoc();
-		$_oldVideo = $_row[$name];
+function processVideo($name)
+{
+    global $db_mysqli;
+    global $_recordId;
+    global $_videoTempFolder;
+    if (isset($_FILES[$name]) && $_FILES[$name]) {
+        // Если пришел файл, то надо добавить/поменять
+        $video = $_FILES[$name];
+        videos_checkExtension($video, $_videoTempFolder);
+        videos_checkSize($video, $_videoTempFolder);
 
-		$_videoFileName = $name.videos_getExtension($video, $_videoTempFolder);
-		$_pathVideo = $_videoTempFolder.$_videoFileName;
+        // Ищем старый
+        $_res = $db_mysqli->query(
+            "SELECT $name FROM collections WHERE id='$_recordId'"
+        );
+        $_row = $_res->fetch_assoc();
+        $_oldVideo = $_row[$name];
 
-		// Грузим исходник в temp
-		if(move_uploaded_file($_FILES[$name]['tmp_name'], $_pathVideo)) {
-			// Загружаем на внешнее хранилище
-			$_oldVideo && outerStorage_removeFile($_oldVideo, 'collections/'.$_recordId);
-			outerStorage_uploadFile($_pathVideo, 'collections/'.$_recordId);
-			$db_mysqli->query("UPDATE collections SET $name = '$_videoFileName' WHERE id = '$_recordId'");
-		} else {
-			functions_totalRemoveFileOrDir($_videoTempFolder);
-			functions_errorOutput('ошибка загрузки видео: ' . $_FILES[$name]['name'] . ' в ' . $_pathVideo, 500);
-		}	
-	} else if (isset($_POST[$name]) && $_POST[$name] === '') {
-		// Возможно, надо удалить видео из хранилища и базы, т.к. пришел пустой результат в ответе от клиента
-		// Ищем старый
-		$_res = $db_mysqli->query("SELECT $name FROM collections WHERE id='$_recordId'");
-		$_row = $_res->fetch_assoc();
-		$_oldVideo = $_row[$name];
-		if ($_oldVideo) {
-			// Да, видео есть и, следовательно, его надо удалить
-			outerStorage_removeFile($_oldVideo, 'collections/'.$_recordId);
-			$db_mysqli->query("UPDATE collections SET $name = '' WHERE id = '$_recordId'");
-		}
-	}
-	// Если придет $_POST[$name] с текстом, то, значит, старое видео не тронуто
-	
+        $_videoFileName =
+            $name . videos_getExtension($video, $_videoTempFolder);
+        $_pathVideo = $_videoTempFolder . $_videoFileName;
+
+        // Грузим исходник в temp
+        if (move_uploaded_file($_FILES[$name]["tmp_name"], $_pathVideo)) {
+            // Загружаем на внешнее хранилище
+            $_oldVideo &&
+                outerStorage_removeFile(
+                    $_oldVideo,
+                    "collections/" . $_recordId
+                );
+            outerStorage_uploadFile($_pathVideo, "collections/" . $_recordId);
+            $db_mysqli->query(
+                "UPDATE collections SET $name = '$_videoFileName' WHERE id = '$_recordId'"
+            );
+        } else {
+            functions_totalRemoveFileOrDir($_videoTempFolder);
+            functions_errorOutput(
+                "ошибка загрузки видео: " .
+                    $_FILES[$name]["name"] .
+                    " в " .
+                    $_pathVideo,
+                500
+            );
+        }
+    } elseif (isset($_POST[$name]) && $_POST[$name] === "") {
+        // Возможно, надо удалить видео из хранилища и базы, т.к. пришел пустой результат в ответе от клиента
+        // Ищем старый
+        $_res = $db_mysqli->query(
+            "SELECT $name FROM collections WHERE id='$_recordId'"
+        );
+        $_row = $_res->fetch_assoc();
+        $_oldVideo = $_row[$name];
+        if ($_oldVideo) {
+            // Да, видео есть и, следовательно, его надо удалить
+            outerStorage_removeFile($_oldVideo, "collections/" . $_recordId);
+            $db_mysqli->query(
+                "UPDATE collections SET $name = '' WHERE id = '$_recordId'"
+            );
+        }
+    }
+    // Если придет $_POST[$name] с текстом, то, значит, старое видео не тронуто
 }
 
-processVideo('video1');
-processVideo('video2');
-processVideo('video3');
-
+processVideo("video1");
+processVideo("video2");
+processVideo("video3");
 ///////////////////// <-- ВИДЕО
 
 ///////////////////// --> ФОТО ФАЙЛЫ
-$_tempFolder = $IMAGES_TEMPFOLDER_PATH.'collections/'.$_recordId.'/';
+$_tempFolder = $IMAGES_TEMPFOLDER_PATH . "collections/" . $_recordId . "/";
 if (!is_dir($_tempFolder) && !mkdir($_tempFolder, 0700, true)) {
-	functions_errorOutput('Не удалось создать директорию:' . $_tempFolder, 500);
+    functions_errorOutput("Не удалось создать директорию:" . $_tempFolder, 500);
 }
 
-
-
 // Выбираем значение photos до перезаписи
-$_res = $db_mysqli->query("SELECT main_image, another_images FROM collections WHERE id=$_recordId");
+$_res = $db_mysqli->query(
+    "SELECT main_image, another_images FROM collections WHERE id=$_recordId"
+);
 $_row = $_res->fetch_assoc();
 
-
-$_main_image = $_row['main_image'];
-$_another_images = json_decode($_row['another_images']);
-
-
-
+$_main_image = $_row["main_image"];
+$_another_images = json_decode($_row["another_images"]);
 
 $_mainImages = [];
 $_mainImagesDb = [1]; // Всегда будет таким - это обновление и главное фото уже есть (его не может не быть)
-$_anotherImages = []; 
-$_anotherImagesDb = []; 
+$_anotherImages = [];
+$_anotherImagesDb = [];
 
 // Главное фото -->
 // Если приложили новый файл - перезаписываем
-if (isset($_FILES['main_image_cropped']) && isset($_FILES['main_image_original'])) {
-	$_mainCroppedFileName = "main_cropped".$IMAGE_EXTENSION;
-	$_pathCroppedMain = $_tempFolder.$_mainCroppedFileName;
-	$_mainOriginalFileName = "main".$IMAGE_EXTENSION;
-	$_pathMainOriginal = $_tempFolder.$_mainOriginalFileName;
+if (
+    isset($_FILES["main_image_cropped"]) &&
+    isset($_FILES["main_image_original"])
+) {
+    $_mainCroppedFileName = "main_cropped" . $IMAGE_EXTENSION;
+    $_pathCroppedMain = $_tempFolder . $_mainCroppedFileName;
+    $_mainOriginalFileName = "main" . $IMAGE_EXTENSION;
+    $_pathMainOriginal = $_tempFolder . $_mainOriginalFileName;
 
-	// Грузим исходник в temp
-	if(move_uploaded_file($_FILES['main_image_cropped']['tmp_name'],$_pathCroppedMain) && move_uploaded_file($_FILES['main_image_original']['tmp_name'],$_pathMainOriginal)) {
-		images_checkProportions($_pathCroppedMain, 1, 1, $_tempFolder);
+    // Грузим исходник в temp
+    if (
+        move_uploaded_file(
+            $_FILES["main_image_cropped"]["tmp_name"],
+            $_pathCroppedMain
+        ) &&
+        move_uploaded_file(
+            $_FILES["main_image_original"]["tmp_name"],
+            $_pathMainOriginal
+        )
+    ) {
+        images_checkProportions($_pathCroppedMain, 1, 1, $_tempFolder);
 
-		$_mainImages = images_localSave($_mainCroppedFileName, $_tempFolder, $IMAGES_MAIN_SQUARE_SIZES, $_tempFolder, false, "main");
-		$_mainImages = array_merge($_mainImages, images_localSave($_mainOriginalFileName, $_tempFolder, $IMAGES_MAIN_SIZES, $_tempFolder, false, "main"));
-		// + Исходник
-		$_mainImages[] = $_mainOriginalFileName;
-	} else {
-		functions_totalRemoveFileOrDir($_tempFolder);
-		functions_errorOutput('ошибка загрузки главного фото: ' . $_FILES['main_image_cropped']['name'] . ' в ' . $_pathCroppedMain, 500);
-	}
+        $_mainImages = images_localSave(
+            $_mainCroppedFileName,
+            $_tempFolder,
+            $IMAGES_MAIN_SQUARE_SIZES,
+            $_tempFolder,
+            false,
+            "main"
+        );
+        $_mainImages = array_merge(
+            $_mainImages,
+            images_localSave(
+                $_mainOriginalFileName,
+                $_tempFolder,
+                $IMAGES_MAIN_SIZES,
+                $_tempFolder,
+                false,
+                "main"
+            )
+        );
+        // + Исходник
+        $_mainImages[] = $_mainOriginalFileName;
+    } else {
+        functions_totalRemoveFileOrDir($_tempFolder);
+        functions_errorOutput(
+            "ошибка загрузки главного фото: " .
+                $_FILES["main_image_cropped"]["name"] .
+                " в " .
+                $_pathCroppedMain,
+            500
+        );
+    }
 }
 // <-- Главное фото
-
-
 
 // Остальные фото -->
 // Если надо удалить часть предыдущих
 
-if (isset($_data['another_images_for_delete'])) {
-	// Подготавливаем новый массив another
-	$_anotherImagesDb = array_values(array_diff($_another_images, $_data['another_images_for_delete']));
+if (isset($_data["another_images_for_delete"])) {
+    // Подготавливаем новый массив another
+    $_anotherImagesDb = array_values(
+        array_diff($_another_images, $_data["another_images_for_delete"])
+    );
 
-	// Удаляем из хранилища
-	foreach ($_data['another_images_for_delete'] as $_number) {
+    // Удаляем из хранилища
+    foreach ($_data["another_images_for_delete"] as $_number) {
+        $_filesSizeNames = images_getFileSizeNames(
+            "another",
+            $_number,
+            $IMAGES_ANOTHER_SIZES
+        );
 
-		$_filesSizeNames = images_getFileSizeNames('another', $_number, $IMAGES_ANOTHER_SIZES);
-		
-		foreach ($_filesSizeNames as $_fileName) {
-			outerStorage_removeFile($_fileName, 'collections/'.$_recordId);
-		}
-	}
-
+        foreach ($_filesSizeNames as $_fileName) {
+            outerStorage_removeFile($_fileName, "collections/" . $_recordId);
+        }
+    }
 } else {
-	$_anotherImagesDb = $_another_images;
+    $_anotherImagesDb = $_another_images;
 }
 
 // Узнаем максимальный number фото
 $_maxNumber = 0;
 
 foreach ($_anotherImagesDb as $_number) {
-	if ($_maxNumber < $_number) {
-		$_maxNumber = $_number;
-	}
+    if ($_maxNumber < $_number) {
+        $_maxNumber = $_number;
+    }
 }
 
 $_newNumber = $_maxNumber + 1;
 
+if (isset($_FILES["another_images"])) {
+    foreach ($_FILES["another_images"]["tmp_name"] as $_index => $_path) {
+        $_anotherFileName =
+            "another_" . ($_newNumber + $_index) . $IMAGE_EXTENSION;
+        $_pathAnother = $_tempFolder . $_anotherFileName;
 
-if (isset($_FILES['another_images'])) {
-	foreach ($_FILES['another_images']['tmp_name'] as $_index => $_path) {
+        // Грузим в temp
+        if (move_uploaded_file($_path, $_pathAnother)) {
+            $_anotherImages = array_merge(
+                $_anotherImages,
+                images_localSave(
+                    $_anotherFileName,
+                    $_tempFolder,
+                    $IMAGES_ANOTHER_SIZES,
+                    $_tempFolder
+                )
+            );
+            // + Исходник
+            $_anotherImages[] = $_anotherFileName;
 
-		$_anotherFileName = "another_".($_newNumber + $_index).$IMAGE_EXTENSION;
-		$_pathAnother = $_tempFolder.$_anotherFileName;
-
-		// Грузим в temp
-		if(move_uploaded_file($_path, $_pathAnother)) {
-			$_anotherImages = array_merge($_anotherImages, images_localSave($_anotherFileName, $_tempFolder, $IMAGES_ANOTHER_SIZES, $_tempFolder));
-			// + Исходник
-			$_anotherImages[] = $_anotherFileName;
-
-			// Сохраняем только номер фото (размеры и расширение фронт знает)
-			$_anotherImagesDb[] = $_newNumber + $_index;
-		} else {
-			functions_totalRemoveFileOrDir($_tempFolder);
-			functions_errorOutput('ошибка дополнительного фото: ' . $_path . ' в ' . $_pathAnother, 500);
-		}
-	}
+            // Сохраняем только номер фото (размеры и расширение фронт знает)
+            $_anotherImagesDb[] = $_newNumber + $_index;
+        } else {
+            functions_totalRemoveFileOrDir($_tempFolder);
+            functions_errorOutput(
+                "ошибка дополнительного фото: " .
+                    $_path .
+                    " в " .
+                    $_pathAnother,
+                500
+            );
+        }
+    }
 }
 
 // <-- Остальные фото
 
-
 // --> Загружаем на внешнее хранилище
-	foreach ($_mainImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'collections/'.$_recordId);
-	}
+foreach ($_mainImages as $_path) {
+    outerStorage_uploadFile($_tempFolder . $_path, "collections/" . $_recordId);
+}
 
-	foreach ($_anotherImages as $_path) {
-		outerStorage_uploadFile($_tempFolder.$_path, 'collections/'.$_recordId);
-	}
+foreach ($_anotherImages as $_path) {
+    outerStorage_uploadFile($_tempFolder . $_path, "collections/" . $_recordId);
+}
 // <-- Загружаем на внешнее хранилище
 
 // Успех? => удаляем из временного хранилища
 functions_totalRemoveFileOrDir($_tempFolder);
 ///////////////////// <-- ФОТО ФАЙЛЫ
 
-
-
 ///////////////////// --> ФОТО В БД
 
 // Отлично, удалось загрузить все фото
 // Пишем их тогда в базу
 
+$_another_photosJSON = json_encode($_anotherImagesDb);
 
-$_another_photosJSON= json_encode($_anotherImagesDb);
-
-$db_mysqli->query("UPDATE collections SET another_images = '". $_another_photosJSON ."', main_image='".(count($_mainImagesDb) ? 1 : 0)."' WHERE id = '".$_recordId."'");
+$db_mysqli->query(
+    "UPDATE collections SET another_images = '" .
+        $_another_photosJSON .
+        "', main_image='" .
+        (count($_mainImagesDb) ? 1 : 0) .
+        "' WHERE id = '" .
+        $_recordId .
+        "'"
+);
 ///////////////////// <-- ФОТО В БД
-
-
-
 
 // -- > Возможное закрытие/открытие сбора
 collectionsCommon_updateCollectionStatus($_recordId);
 // <-- Возможное закрытие/открытие сбора
-
-
-
 
 functions_successOutput($_recordId);
 ?>
