@@ -209,7 +209,7 @@ function images_calculateRealSizes(
     );
 }
 
-function images_convertToJPEG($file, $_tempFolder)
+function images_convertToJPEG($file, $_tempFolder = '')
 {
     // Преобразуем в jpeg
     $_source = null;
@@ -225,7 +225,7 @@ function images_convertToJPEG($file, $_tempFolder)
     }
 
     if (!$_source) {
-        functions_totalRemoveFileOrDir($_tempFolder);
+        $_tempFolder && functions_totalRemoveFileOrDir($_tempFolder);
         functions_errorOutput("некорректный формат изображения: " . $file, 400);
         // return false;
     }
@@ -240,7 +240,8 @@ function images_createResizedCopy(
     $width,
     $height,
     $tempFolder,
-    $withSizeCheck = false
+    $withSizeCheck = false,
+    $withWater = false
 ) {
     list($_srcWidth, $_srcHeight) = getimagesize($file);
     $_sizes = images_calculateRealSizes(
@@ -264,6 +265,7 @@ function images_createResizedCopy(
         $_srcWidth,
         $_srcHeight
     );
+
     imagejpeg($_thumb, $outputImage, 100);
     imagedestroy($_source);
 }
@@ -280,7 +282,8 @@ function images_localSave(
     $outputSizes,
     $tempFolder,
     $withSizeCheck = false,
-    $pseudoName = false
+    $pseudoName = false,
+    $withWater = false
 ) {
     $_fileNames = [];
 
@@ -304,7 +307,8 @@ function images_localSave(
             $_size["width"],
             $_size["height"],
             $tempFolder,
-            $withSizeCheck
+            $withSizeCheck,
+            $withWater
         );
     }
 
@@ -327,5 +331,71 @@ function images_getFileSizeNames($wordPart, $number, $sizes)
         $_fileNames[] = $_newFileName;
     }
     return $_fileNames;
+}
+
+
+function images_create_water(
+    $file,
+    $outputImage,
+    $transparent = 10
+) {
+    if (images_convertToJPEG($file) === false) {
+        return false;
+    }
+
+    list($_srcWidth, $_srcHeight) = getimagesize($file);
+
+    $_thumb = imagecreatetruecolor($_srcWidth, $_srcHeight);
+    $_source = imagecreatefromjpeg($file);
+    imagecopyresampled(
+        $_thumb,
+        $_source,
+        0,
+        0,
+        0,
+        0,
+        $_srcWidth,
+        $_srcHeight,
+        $_srcWidth,
+        $_srcHeight
+    );
+
+    // водяные знаки
+    $_waterSrc = imagecreatefrompng('water.png');
+    if ($_srcWidth > $_srcHeight) {
+        $_number = ceil($_srcHeight/2);
+    } else {
+        $_number = ceil($_srcWidth/2);
+    }
+
+    $_water = imagecreatetruecolor($_number, $_number);
+    $_black = imagecolorallocate($_water, 0, 0, 0);
+
+    // Сделаем фон прозрачным
+    imagecolortransparent($_water, $_black);
+    imagecopyresampled(
+        $_water,
+        $_waterSrc,
+        0,
+        0,
+        0,
+        0,
+        $_number,
+        $_number,
+        900,
+        900
+    );
+
+    $_water_rows = ceil($_srcHeight / $_number);
+    $_water_cols = ceil($_srcWidth / $_number);
+
+    for ($i = 0; $i <= $_water_cols; $i++) {
+        for ($j = 0; $j <= $_water_rows; $j++) {
+            imagecopymerge($_thumb, $_water, $i * $_number, $j * $_number, 0, 0, $_number, $_number, $transparent);
+        }
+    }
+
+    imagejpeg($_thumb, $outputImage, 100);
+    imagedestroy($_source);
 }
 ?>
